@@ -49,6 +49,7 @@ class Drawer:
 		self.format = album.format
 		self.width = self.format.body_width()
 		self.height = self.format.body_height()
+		self.sep = self.format.column_sep
 
 	def draw_image(self, path, x, y, w, h):
 		pass
@@ -76,40 +77,9 @@ class Album(util.AttrMap):
 		self.pages.append(page)
 
 
-def get_image(path, page):
-	if not os.path.exists(path):
-		raise util.CheckError("no image on path '%s'" % path)
-	page.image = path
 
-PAGE_PROPS = {
-	"image": get_image
-}
-
-class CenterPage(Page):
-
-	def __init__(self):
-		Page.__init__(self)
-		self.image = None
-
-	def check(self):
-		if self.image == None:
-			raise util.CheckError("no image provided")
-
-	def get_props(self):
-		return PAGE_PROPS
-
-	def get_packages(self):
-		return set(["tikz"])
-
-	def gen(self, drawer):
-		drawer.draw_image(
-			self.image,
-			0, 0,
-			drawer.width, drawer.height
-		)
 
 
 """Known pages."""
 PAGE_MAP = {
-	"center": CenterPage
 }

@@ -88,6 +88,6 @@ class Drawer(ptah.Drawer):
 		]{%s}};
 
 """ % (
-	x + w/2 + self.dx, x + h/2 + self.dy,
+	x + w/2 + self.dx, y + h/2 + self.dy,
 	w, h, path
 ))

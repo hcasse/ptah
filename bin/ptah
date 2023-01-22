@@ -10,6 +10,7 @@ from ptah import format
 from ptah import util
 from ptah import latex
 from ptah import *
+import ptah.pages
 
 
 # formats
@@ -50,9 +51,9 @@ def read_pages(pages, album):
 			raise CheckError("page type %s is unknown!" % type)
 
 		# initialize the page
+		album.add_page(page)
 		util.parse_dict(desc, page, page.get_props())
 		page.check()
-		album.add_page(page)
 
 def read_format(fmt, album):
 	try:

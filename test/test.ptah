@@ -6,3 +6,12 @@ pages:
   - name: second
     type: center
     image: photos/sword.jpeg
+  - name: three
+    type: duo
+    image1: photos/ice.jpeg
+    image2: photos/vulture.jpeg
+  - name: four
+    type: duo
+    orientation: horizontal
+    image1: photos/ice.jpeg
+    image2: photos/vulture.jpeg
