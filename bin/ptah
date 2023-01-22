@@ -8,6 +8,7 @@ import yaml
 from ptah import io
 from ptah import format
 from ptah import util
+from ptah import latex
 from ptah import *
 
 
@@ -82,12 +83,13 @@ def main(mon = io.DEF):
 		prog = "ptah",
 		description = "Photo album generator"
 	)
-	parser.add_argument('albums', nargs="+", help="Album to generate.")
-	parser.add_argument("--stop-latex", action="store_true",
-		help="Stop after Latex generation.")
+	parser.add_argument('albums', nargs="*", help="Album to generate.")
 	
 	args = parser.parse_args()
-
+	albums = args.albums
+	if albums == None:
+		albums = "album.ptah"
+		
 	# process the albums
 	for path in args.albums:
 		try:
@@ -96,17 +98,7 @@ def main(mon = io.DEF):
 			read_album(album, mon)
 
 			# generate the PDF
-			out_path = album.gen()
-			if not args.stop_latex:
-				base = album.get_base()
-				if base != "":
-					cwd = os.path.abspath(os.getcwd())
-					os.chdir(base)
-				subprocess.run(
-					"pdflatex %s" % os.path.basename(out_path),
-					shell=True)
-				if base != "":
-					os.chdir(cwd)
+			latex.Drawer(album)
 			
 		except util.CheckError as e:
 			mon.print_error(str(e))

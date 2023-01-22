@@ -27,13 +27,34 @@ class Page(util.AttrMap):
 		Raise CheckError if there is an error."""
 		pass
 
-	def gen(self, out):
+	def gen(self, drawer):
 		"""Generate the page on the given output file."""
 		pass
 
 	def get_props(self):
 		"""Get properties for reading the page description."""
 		return {}
+
+	def get_packages(self):
+		"""Get the packages used by this page."""
+		return set()
+
+
+class Drawer:
+	"""Handler for drawing content of a page. Position and sizes are
+	expressed in millimeters."""
+
+	def __init__(self, album):
+		self.album = album
+		self.format = album.format
+		self.width = self.format.body_width()
+		self.height = self.format.body_height()
+
+	def draw_image(self, path, x, y, w, h):
+		pass
+
+	def draw_text(self, text, x, y, w, h):
+		pass
 
 
 class Album(util.AttrMap):
@@ -53,52 +74,6 @@ class Album(util.AttrMap):
 		page.album = self
 		page.number = len(self.pages)
 		self.pages.append(page)
-
-	def gen(self):
-		"""Generate the latex file. Return the file name."""
-		root, ext = os.path.splitext(self.path)
-		out_path = root + ".tex"
-		with open(out_path, "w") as out:
-
-			# write prolog
-			out.write("""
-\\documentclass[a4paper]{book}
-\\usepackage[utf8]{inputenc}
-\\usepackage{graphicx}
-\\usepackage{geometry}
-\\usepackage{layout}
-
-
-\\title{}
-\\author{}
-\\date{\\today}
-
-\\geometry{
-""")
-
-			self.format.gen_geometry(out, True)
-
-			out.write("""
-}
-
-\\begin{document}
-""")
-
-			# write pages
-			first = True
-			for page in self.pages:
-				if not first:
-					first = False
-				out.write("\\newpage\n")
-				page.gen(out)
-
-			# write epilog
-			out.write("""
-\\end{document}
-""")
-
-			# return output name
-			return out_path
 
 
 def get_image(path, page):
@@ -123,16 +98,15 @@ class CenterPage(Page):
 	def get_props(self):
 		return PAGE_PROPS
 
-	def gen(self, out):
-		out.write("""
-\\vfill
-\\noindent\\begin{center}
-\\includegraphics[
-	width=\\textwidth,
-	height=\\textheight,
-	keepaspectratio
-]{%s}\end{center}
-\\vfill""" % self.image)
+	def get_packages(self):
+		return set(["tikz"])
+
+	def gen(self, drawer):
+		drawer.draw_image(
+			self.image,
+			0, 0,
+			drawer.width, drawer.height
+		)
 
 
 """Known pages."""
