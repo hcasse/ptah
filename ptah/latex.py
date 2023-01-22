@@ -5,6 +5,8 @@ import os.path
 import ptah
 import subprocess
 
+DEBUG = False
+
 class Drawer(ptah.Drawer):
 
 	def __init__(self, album):
@@ -52,8 +54,8 @@ class Drawer(ptah.Drawer):
 		for page in self.album.pages:
 			self.out.write(
 """\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
-	\\node[draw, minimum width=\\textwidth, minimum height=\\textheight] {};
-""")
+\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};"""
+			% ("draw, " if DEBUG else ""))
 			page.gen(self)
 			self.out.write("""\\end{tikzpicture}}\n\n""")
 
