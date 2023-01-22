@@ -1,0 +1,8 @@
+format: a4
+pages:
+  - name: first
+    type: center
+    image: photos/reed.jpeg
+  - name: second
+    type: center
+    image: photos/sword.jpeg
