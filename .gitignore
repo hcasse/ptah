@@ -1,0 +1,6 @@
+**/__pycache__
+test/*.aux
+test/*.log
+test/test.pdf
+test/test.tex
+tmp/

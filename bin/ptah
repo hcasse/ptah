@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+
+import argparse
+import re
+import subprocess
+import yaml
+
+from ptah import io
+from ptah import format
+from ptah import util
+from ptah import *
+
+
+# formats
+# https://en.wikipedia.org/wiki/ISO_216
+FORMATS = {
+	"a3": (297, 420),
+	"a4": (210, 297),
+	"a5": (148, 210),
+	"folio": (305, 483),
+	"quarto": (214, 305),
+	"imperial-octavo": (210, 292),
+	"super-octavo": (178, 279),
+	"royal-octavo": (159, 254),
+	"medium-octavo": (165, 235),
+	"octavo": (153, 229),
+	"crown-octavo": (137, 203),
+	"duodecimo": (127, 187),
+	"sextodecimo": (102, 171),
+	"octodecimo": (102, 165)
+}
+
+
+def read_pages(pages, album):
+	if not hasattr(pages, "__iter__"):
+		raise CheckError("pages should a be a list of pages!")
+	for desc in pages:
+
+		# get the page type
+		try:
+			type = desc["type"]
+		except KeyError as e:
+			type = "center"
+
+		# make the page
+		try:
+			page = PAGE_MAP[type]()
+		except KeyError:
+			raise CheckError("page type %s is unknown!" % type)
+
+		# initialize the page
+		util.parse_dict(desc, page, page.get_props())
+		page.check()
+		album.add_page(page)
+
+def read_format(fmt, album):
+	try:
+		album.format = format.FORMATS[fmt.upper()]
+	except KeyError:
+		raise util.CheckError("format %s is unknown" % fmt)
+
+LOAD_MAP = {
+	"pages": read_pages,
+	"format": read_format
+}
+
+def read_album(album, mon):
+	try:
+		with open(album.path) as file:
+			desc = yaml.safe_load(file)
+			util.parse_dict(desc, album, LOAD_MAP)
+		return True
+	except yaml.YAMLError as e:
+		raise CheckError(str(e))
+
+
+# entry point
+def main(mon = io.DEF):
+
+	# parse arguments
+	parser = argparse.ArgumentParser(
+		prog = "ptah",
+		description = "Photo album generator"
+	)
+	parser.add_argument('albums', nargs="+", help="Album to generate.")
+	parser.add_argument("--stop-latex", action="store_true",
+		help="Stop after Latex generation.")
+	
+	args = parser.parse_args()
+
+	# process the albums
+	for path in args.albums:
+		try:
+			# read the album
+			album = Album(path)
+			read_album(album, mon)
+
+			# generate the PDF
+			out_path = album.gen()
+			if not args.stop_latex:
+				base = album.get_base()
+				if base != "":
+					cwd = os.path.abspath(os.getcwd())
+					os.chdir(base)
+				subprocess.run(
+					"pdflatex %s" % os.path.basename(out_path),
+					shell=True)
+				if base != "":
+					os.chdir(cwd)
+			
+		except util.CheckError as e:
+			mon.print_error(str(e))
+
+main()
