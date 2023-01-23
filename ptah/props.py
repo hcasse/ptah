@@ -58,7 +58,7 @@ class EnumProperty(Property):
 
 	def get_description(self):
 		return "one of " + ", ".join(self.vals) + ": " + \
-			Property.get_description()
+			Property.get_description(self)
 
 
 class StringProperty(Property):

@@ -4,3 +4,5 @@ test/*.log
 test/test.pdf
 test/test.tex
 tmp/
+test/ptah.tex
+test/ptah.pdf

@@ -51,6 +51,7 @@ def add(props, prop):
 # Center page
 class CenterPage(ptah.Page):
 
+	NAME = "center"
 	PROPS = props.make([PROP_NAME, PROP_IMAGE])
 
 	def __init__(self):
@@ -67,10 +68,23 @@ class CenterPage(ptah.Page):
 			drawer.width, drawer.height
 		)
 
+	def gen_miniature(drawer):
+		drawer.draw_box(
+			0, 0,
+			drawer.width, drawer.height,
+			draw = "black",
+			fill = "gray"
+		)
+		drawer.draw_text(
+			0, 0,
+			drawer.width, drawer.height,
+			"image"
+		)
 
 # Duo page
 class DuoPage(ptah.Page):
 
+	NAME = "duo"
 	PROPS = props.make([
 		PROP_NAME,
 		PROP_IMAGE1,
@@ -95,21 +109,48 @@ class DuoPage(ptah.Page):
 		if self.orientation == 0:
 			h = (drawer.height - drawer.sep) / 2
 			x1 = 0
-			y1 = h + drawer.sep
+			y1 = 0
 			x2 = 0
-			y2 = 0
+			y2 = h + drawer.sep
 			w = drawer.width
 		else:
 			w = (drawer.width - drawer.sep) / 2
-			x1 = w + drawer.sep
+			x1 = 0
 			y1 = 0
-			x2 = 0
+			x2 = w + drawer.sep
 			y2 = 0
 			h = drawer.height
 		drawer.draw_image(self.image1, x1, y1, w, h)
 		drawer.draw_image(self.image2, x2, y2, w, h)
-	
+
+	def gen_miniature(drawer):
+		h = (drawer.height - 2)/2.
+		drawer.draw_box(
+			0, 0,
+			drawer.width, h,
+			draw = "black",
+			fill = "gray"
+		)
+		drawer.draw_text(
+			0, 0,
+			drawer.width, h,
+			"image1"
+		)
+		drawer.draw_box(
+			0, h+2,
+			drawer.width, h,
+			draw = "black",
+			fill = "gray"
+		)
+		drawer.draw_text(
+			0, h+2,
+			drawer.width, h,
+			"image2"
+		)
+
 
 # Page initialization
-ptah.PAGE_MAP["center"] = CenterPage
-ptah.PAGE_MAP["duo"] = DuoPage
+def add(cls):
+	ptah.PAGE_MAP[cls.NAME] = cls
+add(CenterPage)
+add(DuoPage)

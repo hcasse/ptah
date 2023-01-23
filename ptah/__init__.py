@@ -17,9 +17,11 @@ MARGIN_RIGHT = "margin-right"
 class Page(util.AttrMap):
 	"""A page in the created album."""
 
+	NAME = ""
+	PROPS = {}
+
 	def __init__(self):
 		util.AttrMap.__init__(self)
-		self.album = None
 		self.number = None
 
 	def check(self):
@@ -39,6 +41,11 @@ class Page(util.AttrMap):
 		"""Get the packages used by this page."""
 		return set()
 
+	def gen_miniature(drawer):
+		"""Called to generate the miniature when the documentation is
+		called."""
+		pass
+
 
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are
@@ -54,7 +61,7 @@ class Drawer:
 	def draw_image(self, path, x, y, w, h):
 		pass
 
-	def draw_text(self, text, x, y, w, h):
+	def draw_text(self, x, y, w, h, text):
 		pass
 
 

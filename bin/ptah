@@ -73,7 +73,7 @@ class FormatProp(props.Property):
 			raise util.CheckError(self, "format %s is unknown" % fmt)
 				
 
-LOAD_MAP = props.make([
+ALBUM_PROPS = props.make([
 	FormatProp(),
 	PagesProp()
 ])
@@ -82,7 +82,7 @@ def read_album(album, mon):
 	try:
 		with open(album.path) as file:
 			desc = yaml.safe_load(file)
-			util.parse_dict(desc, album, LOAD_MAP)
+			util.parse_dict(desc, album, ALBUM_PROPS)
 		return True
 	except yaml.YAMLError as e:
 		raise CheckError(str(e))
@@ -97,23 +97,26 @@ def main(mon = io.DEF):
 		description = "Photo album generator"
 	)
 	parser.add_argument('albums', nargs="*", help="Album to generate.")
+	parser.add_argument("--doc", action="store_true",
+		help="Generate the documentation.")
 	
 	args = parser.parse_args()
 	albums = args.albums
 	if albums == None:
 		albums = "album.ptah"
+
+	# generate the documentation
+	if args.doc:
+		latex.gen_doc(ALBUM_PROPS)
 		
 	# process the albums
-	for path in args.albums:
-		try:
-			# read the album
-			album = Album(path)
-			read_album(album, mon)
-
-			# generate the PDF
-			latex.Drawer(album)
-			
-		except util.CheckError as e:
-			mon.print_error(str(e))
+	else:
+		for path in args.albums:
+			try:
+				album = Album(path)
+				read_album(album, mon)
+				latex.Drawer(album)				
+			except util.CheckError as e:
+				mon.print_error(str(e))
 
 main()
