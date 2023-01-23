@@ -2,6 +2,8 @@
 
 import os
 import ptah
+from ptah import util
+from ptah import props
 
 def not_none(x, msg):
 	if x == None:
@@ -36,20 +38,24 @@ def get_orientation(val, page):
 		["vertical", "horizontal"],
 		"orientation")
 
+PROP_NAME = props.StringProperty("name", "name")
+PROP_IMAGE = props.ImageProperty("image", "image")
+PROP_IMAGE1 = props.ImageProperty("image1", "image")
+PROP_IMAGE2 = props.ImageProperty("image2", "image")
+PROP_ORIENTATION = props.EnumProperty(
+	"orientation", "orientation", ["vertical", "horizontal"])
+
+def add(props, prop):
+	props[prop.id] = prop
 
 # Center page
 class CenterPage(ptah.Page):
 
-	PROPS = {
-		"image": get_image
-	}
+	PROPS = props.make([PROP_NAME, PROP_IMAGE])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
 		self.image = None
-
-	def check(self):
-		not_none(self.image, "no image provided")
 
 	def get_props(self):
 		return CenterPage.PROPS
@@ -65,11 +71,12 @@ class CenterPage(ptah.Page):
 # Duo page
 class DuoPage(ptah.Page):
 
-	PROPS = {
-		"image1": get_image1,
-		"image2": get_image2,
-		"orientation": get_orientation
-	}
+	PROPS = props.make([
+		PROP_NAME,
+		PROP_IMAGE1,
+		PROP_IMAGE2,
+		PROP_ORIENTATION
+	])
 
 	def __init__(self):
 		ptah.Page.__init__(self)

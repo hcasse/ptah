@@ -9,6 +9,7 @@ from ptah import io
 from ptah import format
 from ptah import util
 from ptah import latex
+from ptah import props
 from ptah import *
 import ptah.pages
 
@@ -33,38 +34,49 @@ FORMATS = {
 }
 
 
-def read_pages(pages, album):
-	if not hasattr(pages, "__iter__"):
-		raise CheckError("pages should a be a list of pages!")
-	for desc in pages:
+class PagesProp(props.Property):
 
-		# get the page type
-		try:
-			type = desc["type"]
-		except KeyError as e:
-			type = "center"
+	def __init__(self):
+		props.Property.__init__(self, "pages", "list of pages", req = True)
 
-		# make the page
+	def parse(self, pages, album):
+		if not hasattr(pages, "__iter__"):
+			raise CheckError("pages should a be a list of pages!")
+		for desc in pages:
+
+			# get the page type
+			try:
+				type = desc["type"]
+			except KeyError as e:
+				type = "center"
+
+			# make the page
+			try:
+				page = PAGE_MAP[type]()
+			except KeyError:
+				raise CheckError("page type %s is unknown!" % type)
+
+			# initialize the page
+			album.add_page(page)
+			util.parse_dict(desc, page, page.get_props())
+
+
+class FormatProp(props.Property):
+
+	def __init__(self):
+		props.Property.__init__(self, "format", "page format", req = True)
+
+	def parse(self, fmt, album):
 		try:
-			page = PAGE_MAP[type]()
+			props.Property.parse(self, format.FORMATS[fmt.upper()], album)
 		except KeyError:
-			raise CheckError("page type %s is unknown!" % type)
+			raise util.CheckError(self, "format %s is unknown" % fmt)
+				
 
-		# initialize the page
-		album.add_page(page)
-		util.parse_dict(desc, page, page.get_props())
-		page.check()
-
-def read_format(fmt, album):
-	try:
-		album.format = format.FORMATS[fmt.upper()]
-	except KeyError:
-		raise util.CheckError("format %s is unknown" % fmt)
-
-LOAD_MAP = {
-	"pages": read_pages,
-	"format": read_format
-}
+LOAD_MAP = props.make([
+	FormatProp(),
+	PagesProp()
+])
 
 def read_album(album, mon):
 	try:

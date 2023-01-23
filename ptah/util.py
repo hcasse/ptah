@@ -41,7 +41,6 @@ class AttrMap:
 		if something is wrong."""
 		pass
 
-
 def parse_dict(data, base, props):
 	"""Parse the given data, that is a dictionary, and call functions
 	proprties, a map made (key, fun) according to the key found in data.
@@ -49,10 +48,13 @@ def parse_dict(data, base, props):
 	inherit from AttrMap and are assigned for any key of data not found
 	in props. Call check() on base in the end."""
 
+	# pick the properties
 	for key in data:
 		try:
-			props[key](data[key], base)
+			props[key].parse(data[key], base)
 		except KeyError:
 			base.set_attr(key, data[key])
-	base.check()
 
+	# check the properties
+	for prop in props:
+		props[prop].check(base)

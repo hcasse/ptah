@@ -6,10 +6,6 @@ Set the `PYTHONPATH` to the top source directory:
 
 	export PYTHONPATH=$PYTHONPATH:$PWD
 
-## test photos
-
-* [https://pxhere.com/](PH)
-
 
 ## Latex
 

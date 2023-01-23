@@ -5,7 +5,7 @@ pages:
     image: photos/reed.jpeg
   - name: second
     type: center
-    image: photos/sword.jpeg
+    image: photos/woman.jpg
   - name: three
     type: duo
     image1: photos/ice.jpeg
@@ -13,5 +13,5 @@ pages:
   - name: four
     type: duo
     orientation: horizontal
-    image1: photos/ice.jpeg
-    image2: photos/vulture.jpeg
+    image1: photos/hoang.jpg
+    image2: photos/sword.jpeg
