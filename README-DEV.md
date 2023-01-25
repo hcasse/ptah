@@ -21,3 +21,7 @@ Set the `PYTHONPATH` to the top source directory:
 * trim=XL1 YL1 XL2 YL2
 * bb= X1 Y1 X2 Y2
 
+### Fonts
+
+[Font Catalog](https://tug.org/FontCatalogue/)
+

@@ -4,6 +4,7 @@ import os
 import os.path
 import ptah
 import ptah.format
+import ptah.props
 import subprocess
 
 DEBUG = False
@@ -13,62 +14,32 @@ MINIATURE_HEIGHT = 40
 PROLOG = \
 """
 \\usepackage[utf8]{inputenc}
-\\usepackage{graphicx}
-\\usepackage{geometry}
-\\usepackage{layout}
-\\usepackage{tikz}
-\\usepackage{adjustbox}
 """
 
 class Drawer(ptah.Drawer):
 
 	def __init__(self, album = None):
-
-		# initialize
 		ptah.Drawer.__init__(self, album)
 		self.dx = self.width / 2.
 		self.dy = self.height / 2.
+		self.colors = {}
+		self.packages = [
+			"adjustbox",
+			"geometry",
+			"graphicx",
+			"layout",
+			"tikz",
+			"xcolor"
+		]
+		self.doctype = "book"
 
-		# generate the output
-		root, ext = os.path.splitext(album.path)
-		self.out_path = root + ".tex"
-		self.out = open(self.out_path, "w")
+	def gen(self):
 
-		# write prolog
-		self.out.write("\\documentclass[a4paper]{book}\n")
-		self.out.write(PROLOG)
-		self.out.write("\\title{}\n")
-		self.out.write("\\author{}\n")
-		self.out.write("\\date{\\today}\n")
+		# generate Latex file
+		self.gen_latex()
 
-		# write geometry
-		self.out.write("\\geometry{\n")
-		self.out.write("paperwidth = %smm,\n" % self.format.width)
-		self.out.write("paperheight = %smm,\n" % self.format.height)
-		self.out.write("top = %smm,\n" % self.format.top_margin)
-		self.out.write("bottom = %smm,\n" % self.format.bottom_margin)
-		self.out.write("left = %smm,\n" % self.format.oddside_margin)
-		self.out.write("right = %smm\n" % self.format.evenside_margin)
-		self.out.write("}\n")
-
-		# write the body
-		self.out.write("\\begin{document}\n")
-		for page in self.album.pages:
-			self.out.write(
-"""\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
-\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};"""
-			% ("draw, " if DEBUG else ""))
-			page.gen(self)
-			self.out.write("""\\end{tikzpicture}}\n\n""")
-
-		# write epilog
-		self.out.write("\\end{document}\n")
-
-		# close all
-		self.out.close()
-
-		# generate the PDF
-		dir = album.get_base()
+		# generate PDF file
+		dir = self.album.get_base()
 		if dir != "":
 			cwd = os.path.abspath(os.getcwd())
 			os.chdir(dir)
@@ -78,7 +49,79 @@ class Drawer(ptah.Drawer):
 		if dir != "":
 			os.chdir(cwd)
 
+	def gen_latex(self):
+		"""Called to generate the output file."""
 
+		# collect declaration
+		background_color = self.album.background_color
+		if background_color == None:
+			self.declare_color("#FFFFFF")
+		else:
+			self.declare_color(background_color)
+		for page in self.album.pages:
+			page.declare(self)
+
+		# generate the latex
+		root, ext = os.path.splitext(self.album.path)
+		self.out_path = root + ".tex"
+		self.out = open(self.out_path, "w")
+		write = self.out.write
+		self.gen_declaration()
+		write("\\begin{document}\n")
+		self.gen_body()
+		write("\\end{document}\n")
+		self.out.close()
+
+	def gen_body(self):
+		write = self.out.write
+		first = True
+		for page in self.album.pages:
+			if first:
+				first = False
+			else:
+				write("\\newpage\n")
+
+			# set background
+			bg = page.background_color
+			if bg == None:
+				bg = self.album.background_color
+				if bg == None:
+					bg = "#FFFFFF"
+			write("\\pagecolor{%s}\n" % self.get_color(bg))
+
+			# generate the content
+			write(
+"""\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
+\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};"""
+			% ("draw, " if DEBUG else ""))
+			page.gen(self)
+			write("""\\end{tikzpicture}}\n\n""")
+
+	def gen_declaration(self):
+		write = self.out.write
+		
+		# write prolog
+		write("\\documentclass[a4paper]{%s}\n" % self.doctype)
+		write(PROLOG)
+		for pack in self.packages:
+			write("\\usepackage{%s}\n" % pack)
+		write("\\title{%s}\n" % self.album.title)
+		write("\\author{%s}\n" % self.album.author)
+		write("\\date{%s}\n" % self.album.date)
+
+		# write geometry
+		write("\\geometry{\n")
+		write("paperwidth = %smm,\n" % self.format.width)
+		write("paperheight = %smm,\n" % self.format.height)
+		write("top = %smm,\n" % self.format.top_margin)
+		write("bottom = %smm,\n" % self.format.bottom_margin)
+		write("left = %smm,\n" % self.format.oddside_margin)
+		write("right = %smm\n" % self.format.evenside_margin)
+		write("}\n")
+
+		# write colors
+		for (col, name) in self.colors.items():
+			write("\\definecolor{%s}{HTML}{%s}\n" % (name, col[1:]))
 
 	def draw_image(self, path, x, y, w, h):
 		x, y = self.remap(x, y)
@@ -109,32 +152,22 @@ class Drawer(ptah.Drawer):
 		self.out.write("] at(%smm, %smm) {%s};\n"
 			% (x+w/2., y-h/2., text))
 
+	def declare_color(self, color):
+		"""Declare a new used color."""
+		if color not in self.colors:
+			self.colors[color] = "PTAHcolor%d" % len(self.colors)
 
-def gen_doc(props):
-	"""Generate the documentation."""
-	album = ptah.Album("ptah.ptah")
-	album.format = ptah.format.Format("doc",
-		MINIATURE_WIDTH,
-		MINIATURE_HEIGHT,
-		2)
-	drawer = Drawer(album)
-	
-	with open("ptah.tex", "w") as out:
-		drawer.out = out
+	def get_color(self, color):
+		"""Get the latex name for a color. Raise KeyError if the color
+		has not been declared."""
+		return self.colors[color]
 
-		# generate prolog
-		out.write("\\documentclass[a4paper]{article}\n")
-		out.write(PROLOG)
-		out.write("\\usepackage{listings}\n")
-		out.write("\\title{Ptah Documentation}\n")
-		out.write("\\author{H. Cassé $<$hug.casse@gmail.com$>$}\n")
-		out.write("\\date{\\today}\n")
-		out.write("\\begin{document}\n")
+	def use_package(self, package):
+		"""Add a package."""
+		if package not in self.packages:
+			self.packages.append(package)
 
-		# generate syntax
-		out.write(
-"""
-
+DOC_SYNTAX = """
 \\maketitle
 
 \\section{Syntax}
@@ -154,59 +187,103 @@ pages:
     ...
 ...
 \\end{lstlisting}
-""")
+"""
 
-		out.write("\\begin{description}\n")
-		for prop in props.values():
-			out.write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
-		out.write("\\end{description}\n")
+
+class DocDrawer(Drawer):
+
+	def __init__(self):
+		Drawer.__init__(self, ptah.Album("ptah.ptah"))
+
+		for col in ptah.props.HTML_COLORS.values():
+			self.declare_color(col)
+		self.use_package("listings")
+		self.title = "Ptah Documentation"
+		self.author = "H. Cassé $<$hug.casse@gmail.com$>$"
+		self.date = "\\today"
+		self.doctype = "article"
+
+		self.mini = ptah.Album("mini")
+		self.mini.format = ptah.format.Format(
+			"mini",
+			MINIATURE_WIDTH,
+			MINIATURE_HEIGHT,
+			2)
+		self.mini_drawer = Drawer(self.mini)
+		
+	def gen_body(self):
+		write = self.out.write
+		self.mini_drawer.out = self.out
+
+		# album doc
+		write(DOC_SYNTAX)
+		write("\\paragraph{Properties}\n")
+		write("\\begin{description}\n")
+		for prop in ptah.ALBUM_PROPS.values():
+			write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
+		write("\\end{description}\n")
 
 		# generate format list
-		out.write("\\section{Formats}\n")
-		out.write("\\begin{tabular}{|c|c|c|c|c|c|c|}\n")
-		out.write("\\hline\n")
-		out.write("& Size & & Margins & & & \\\\")
-		out.write("\\hline\n")
-		out.write("Name & Width & Height & Top & Bottom & Left & Right \\\\")
-		out.write("\\hline\hline\n")
+		write("\\section{Formats}\n")
+		write("\\begin{tabular}{|c|c|c|c|c|c|c|}\n")
+		write("\\hline\n")
+		write("& Size & & Margins & & & \\\\")
+		write("\\hline\n")
+		write("Name & Width & Height & Top & Bottom & Left & Right \\\\")
+		write("\\hline\hline\n")
 		for fmt in ptah.format.FORMATS.values():
-			out.write("%s & %s & %s & %s & %s & %s & %s \\\\"
+			write("%s & %s & %s & %s & %s & %s & %s \\\\"
 				% (
 					fmt.name, fmt.width, fmt.height,
 					fmt.top_margin, fmt.bottom_margin,
 					fmt.oddside_margin, fmt.evenside_margin
 				))
-		out.write("\\hline\n")
-		out.write("\\end{tabular}\n\n")
-		out.write("Size in mm.\n")
+		write("\\hline\n")
+		write("\\end{tabular}\n\n")
+		write("Size in mm.\n")
 
 		# generate pages
-		out.write("\\section{Page types}\n")
+		write("\\section{Page types}\n")
 		for page in ptah.PAGE_MAP.values():
 
 			# dump miniature
-			out.write("\\noindent\\begin{minipage}{.3\\textwidth}\n")
-			out.write("\\begin{tikzpicture}\n")
-			out.write("\\node[minimum width=%smm, minimum height=%smm, draw] {};\n"
+			write("\\noindent\\begin{minipage}{.3\\textwidth}\n")
+			write("\\begin{tikzpicture}\n")
+			write("\\node[minimum width=%smm, minimum height=%smm, draw] {};\n"
 				% (MINIATURE_WIDTH, MINIATURE_HEIGHT))
-			page.gen_miniature(drawer)
-			out.write("\\end{tikzpicture}\n")
-			out.write("\\end{minipage}\n")
+			page.gen_miniature(self.mini_drawer)
+			write("\\end{tikzpicture}\n")
+			write("\\end{minipage}\n")
 
 			# dump properties
-			out.write("\\begin{minipage}{.6\\textwidth}\n")
-			out.write("\\paragraph{Type:} %s\n" % page.NAME)
-			out.write("\\begin{description}\n")
+			write("\\begin{minipage}{.6\\textwidth}\n")
+			write("\\paragraph{Type:} %s\n" % page.NAME)
+			write("\\begin{description}\n")
 			for prop in page.PROPS.values():
 				print(prop)
-				out.write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
-			out.write("\\end{description}\n")
-			out.write("\\end{minipage}\n\n\\bigskip")
+				write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
+			write("\\end{description}\n")
+			write("\\end{minipage}\n\n\\bigskip")
 
-		# generate epilog
-		out.write("\\end{document}\n")
+		# dump colors
+		write("\\section{Colors}\n")
+		write("Colors follows HTML notation: \\texttt{\\#RRGGBB} with R, G, B hexadecimal.\n")
+		write("\\paragraph{Named colors}~~~\n\n")
+		write("\\bigskip\\small\\begin{tabular}{clclclcl}\n")
+		n = 0
+		for (name, col) in ptah.props.HTML_COLORS.items():
+			write("{\\color{%s}\\rule{8mm}{4mm}} & %s" %
+				(self.get_color(col), name))
+			n = n + 1
+			if n == 4:
+				write("\\\\\n")
+				n = 0
+			else:
+				write(" & ")
+		write("\\end{tabular}\n")
 
-	# run the generation
-	subprocess.run("pdflatex ptah.tex", shell=True)
 
-	# open the file at the end
+def gen_doc():
+	"""Generate the documentation."""
+	drawer = DocDrawer()
+	drawer.gen()

@@ -1,18 +1,39 @@
 """Ptah is a utility to generate photo album. This is the main library."""
 
-import os.path
-
+import os
+import yaml
 from ptah import format
+from ptah import props
 from ptah import util
-from string import Template
 
-# Common attributes
-IMAGE = "image"
-MARGIN = "margin"
-MARGIN_TOP = "margin-top"
-MARGIN_BOTTOM = "margin-bottom"
-MARGIN_LEFT = "margin-left"
-MARGIN_RIGHT = "margin-right"
+class Drawer:
+	"""Handler for drawing content of a page. Position and sizes are
+	expressed in millimeters."""
+
+	def __init__(self, album):
+		self.album = album
+		self.format = album.format
+		self.width = self.format.body_width()
+		self.height = self.format.body_height()
+		self.sep = self.format.column_sep
+
+	def draw_image(self, path, x, y, w, h):
+		pass
+
+	def draw_text(self, x, y, w, h, text):
+		pass
+
+	def declare_color(self, color):
+		"""Called to declare a color during the declaration phase."""
+		pass
+
+
+BACKGROUND_COLOR_PROP = props.ColorProperty("background-color", "Color for background.")
+
+PAGE_PROPS = [
+	BACKGROUND_COLOR_PROP
+]
+
 
 class Page(util.AttrMap):
 	"""A page in the created album."""
@@ -23,6 +44,7 @@ class Page(util.AttrMap):
 	def __init__(self):
 		util.AttrMap.__init__(self)
 		self.number = None
+		self.background_color = None
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
@@ -46,24 +68,59 @@ class Page(util.AttrMap):
 		called."""
 		pass
 
+	def declare(self, drawer):
+		"""Called to declare usd resource in the declaration phase."""
+		if self.background_color != None:
+			drawer.declare_color(self.background_color)
 
-class Drawer:
-	"""Handler for drawing content of a page. Position and sizes are
-	expressed in millimeters."""
 
-	def __init__(self, album):
-		self.album = album
-		self.format = album.format
-		self.width = self.format.body_width()
-		self.height = self.format.body_height()
-		self.sep = self.format.column_sep
+class PagesProp(props.Property):
 
-	def draw_image(self, path, x, y, w, h):
-		pass
+	def __init__(self):
+		props.Property.__init__(self, "pages", "list of pages", req = True)
 
-	def draw_text(self, x, y, w, h, text):
-		pass
+	def parse(self, pages, album):
+		if not hasattr(pages, "__iter__"):
+			raise CheckError("pages should a be a list of pages!")
+		for desc in pages:
 
+			# get the page type
+			try:
+				type = desc["type"]
+			except KeyError as e:
+				type = "center"
+
+			# make the page
+			try:
+				page = PAGE_MAP[type]()
+			except KeyError:
+				raise CheckError("page type %s is unknown!" % type)
+
+			# initialize the page
+			album.add_page(page)
+			util.parse_dict(desc, page, page.get_props())
+
+
+class FormatProp(props.Property):
+
+	def __init__(self):
+		props.Property.__init__(self, "format", "page format", req = True)
+
+	def parse(self, fmt, album):
+		try:
+			props.Property.parse(self, format.FORMATS[fmt.upper()], album)
+		except KeyError:
+			raise util.CheckError(self, "format %s is unknown" % fmt)
+
+
+ALBUM_PROPS = props.make([
+	FormatProp(),
+	PagesProp(),
+	props.StringProperty("title", "Album title."),
+	props.StringProperty("author", "Author name."),
+	props.StringProperty("date", "Edition date."),
+	BACKGROUND_COLOR_PROP
+])
 
 class Album(util.AttrMap):
 	"""The album itself, mainly an ordered collection of pages."""
@@ -74,6 +131,9 @@ class Album(util.AttrMap):
 		self.pages = []
 		self.base = os.path.dirname(path)
 		self.format = format.A4
+		self.title = "no title"
+		self.author = None
+		self.date = None
 
 	def get_base(self):
 		return self.base
@@ -83,10 +143,18 @@ class Album(util.AttrMap):
 		page.number = len(self.pages)
 		self.pages.append(page)
 
+	def read(self, mon):
+		try:
+			with open(self.path) as file:
+				desc = yaml.safe_load(file)
+				util.parse_dict(desc, self, ALBUM_PROPS)
+			return True
+		except yaml.YAMLError as e:
+			raise CheckError(str(e))
 
 
 
 
-"""Known pages."""
-PAGE_MAP = {
-}
+
+"""Map of page types."""
+PAGE_MAP = {}

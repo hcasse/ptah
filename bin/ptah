@@ -12,6 +12,7 @@ from ptah import latex
 from ptah import props
 from ptah import *
 import ptah.pages
+import ptah.album
 
 
 # formats
@@ -34,60 +35,6 @@ FORMATS = {
 }
 
 
-class PagesProp(props.Property):
-
-	def __init__(self):
-		props.Property.__init__(self, "pages", "list of pages", req = True)
-
-	def parse(self, pages, album):
-		if not hasattr(pages, "__iter__"):
-			raise CheckError("pages should a be a list of pages!")
-		for desc in pages:
-
-			# get the page type
-			try:
-				type = desc["type"]
-			except KeyError as e:
-				type = "center"
-
-			# make the page
-			try:
-				page = PAGE_MAP[type]()
-			except KeyError:
-				raise CheckError("page type %s is unknown!" % type)
-
-			# initialize the page
-			album.add_page(page)
-			util.parse_dict(desc, page, page.get_props())
-
-
-class FormatProp(props.Property):
-
-	def __init__(self):
-		props.Property.__init__(self, "format", "page format", req = True)
-
-	def parse(self, fmt, album):
-		try:
-			props.Property.parse(self, format.FORMATS[fmt.upper()], album)
-		except KeyError:
-			raise util.CheckError(self, "format %s is unknown" % fmt)
-				
-
-ALBUM_PROPS = props.make([
-	FormatProp(),
-	PagesProp()
-])
-
-def read_album(album, mon):
-	try:
-		with open(album.path) as file:
-			desc = yaml.safe_load(file)
-			util.parse_dict(desc, album, ALBUM_PROPS)
-		return True
-	except yaml.YAMLError as e:
-		raise CheckError(str(e))
-
-
 # entry point
 def main(mon = io.DEF):
 
@@ -107,15 +54,15 @@ def main(mon = io.DEF):
 
 	# generate the documentation
 	if args.doc:
-		latex.gen_doc(ALBUM_PROPS)
+		latex.gen_doc()
 		
 	# process the albums
 	else:
 		for path in args.albums:
 			try:
 				album = Album(path)
-				read_album(album, mon)
-				latex.Drawer(album)				
+				album.read(mon)
+				latex.Drawer(album).gen()
 			except util.CheckError as e:
 				mon.print_error(str(e))
 

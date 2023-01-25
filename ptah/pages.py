@@ -5,38 +5,7 @@ import ptah
 from ptah import util
 from ptah import props
 
-def not_none(x, msg):
-	if x == None:
-		raise util.CheckError("msg")
-
-def one_of(val, vals, id):
-	val = val.lower()
-	for i in range(0, len(vals)):
-		if val == vals[i]:
-			return i
-	raise util.CheckError("%s must be one of %s" % (id, vals))
-
-def check_image(path, page):
-	if not os.path.exists(os.path.join(page.album.get_base(), path)):
-		raise util.CheckError("no image on path '%s'" % path)
-
-def get_image(path, page):
-	check_image(path, page)
-	page.image = path
-
-def get_image1(path, page):
-	check_image(path, page)
-	page.image1 = path
-
-def get_image2(path, page):
-	check_image(path, page)
-	page.image2 = path
-
-def get_orientation(val, page):
-	page.orientation = one_of(
-		val,
-		["vertical", "horizontal"],
-		"orientation")
+MINIATURE_BACK = "yellow!50!white"
 
 PROP_NAME = props.StringProperty("name", "name")
 PROP_IMAGE = props.ImageProperty("image", "image")
@@ -52,7 +21,7 @@ def add(props, prop):
 class CenterPage(ptah.Page):
 
 	NAME = "center"
-	PROPS = props.make([PROP_NAME, PROP_IMAGE])
+	PROPS = props.make(ptah.PAGE_PROPS + [PROP_NAME, PROP_IMAGE])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
@@ -73,7 +42,7 @@ class CenterPage(ptah.Page):
 			0, 0,
 			drawer.width, drawer.height,
 			draw = "black",
-			fill = "gray"
+			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
 			0, 0,
@@ -85,7 +54,7 @@ class CenterPage(ptah.Page):
 class DuoPage(ptah.Page):
 
 	NAME = "duo"
-	PROPS = props.make([
+	PROPS = props.make(ptah.PAGE_PROPS + [
 		PROP_NAME,
 		PROP_IMAGE1,
 		PROP_IMAGE2,
@@ -129,7 +98,7 @@ class DuoPage(ptah.Page):
 			0, 0,
 			drawer.width, h,
 			draw = "black",
-			fill = "gray"
+			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
 			0, 0,
@@ -140,7 +109,7 @@ class DuoPage(ptah.Page):
 			0, h+2,
 			drawer.width, h,
 			draw = "black",
-			fill = "gray"
+			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
 			0, h+2,

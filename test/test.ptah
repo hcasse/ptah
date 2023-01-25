@@ -1,15 +1,20 @@
+title: Test Album
+author: H. Cassé
+date: 24/01/2023
 format: a4
+background-color: ivory
 pages:
   - name: first
     type: center
     image: photos/reed.jpeg
   - name: second
     type: center
-    image: photos/woman.jpg
+    image: photos/chem.jpeg
   - name: three
     type: duo
     image1: photos/ice.jpeg
     image2: photos/vulture.jpeg
+    background-color: papayawhip
   - name: four
     type: duo
     orientation: horizontal
