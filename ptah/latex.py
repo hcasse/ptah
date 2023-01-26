@@ -92,7 +92,8 @@ class Drawer(ptah.Drawer):
 			# generate the content
 			write(
 """\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
-\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};"""
+\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};
+"""
 			% ("draw, " if DEBUG else ""))
 			page.gen(self)
 			write("""\\end{tikzpicture}}\n\n""")

@@ -8,9 +8,8 @@ from ptah import props
 MINIATURE_BACK = "yellow!50!white"
 
 PROP_NAME = props.StringProperty("name", "name")
-PROP_IMAGE = props.ImageProperty("image", "image")
-PROP_IMAGE1 = props.ImageProperty("image1", "image")
-PROP_IMAGE2 = props.ImageProperty("image2", "image")
+PROP_IMAGE = props.ImageProperty("image", "image", req = True)
+PROP_IMAGES = props.ImageProperty("image", "image", req = True, multi = True)
 PROP_ORIENTATION = props.EnumProperty(
 	"orientation", "orientation", ["vertical", "horizontal"])
 
@@ -56,20 +55,14 @@ class DuoPage(ptah.Page):
 	NAME = "duo"
 	PROPS = props.make(ptah.PAGE_PROPS + [
 		PROP_NAME,
-		PROP_IMAGE1,
-		PROP_IMAGE2,
+		PROP_IMAGES,
 		PROP_ORIENTATION
 	])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
-		self.image1 = None
-		self.image2 = None
+		self.image = [ None, None ]
 		self.orientation = 0
-
-	def check(self):
-		not_none(self.image1, "no image1 provided")
-		not_none(self.image2, "no image2 provided")
 
 	def get_props(self):
 		return DuoPage.PROPS
@@ -89,8 +82,8 @@ class DuoPage(ptah.Page):
 			x2 = w + drawer.sep
 			y2 = 0
 			h = drawer.height
-		drawer.draw_image(self.image1, x1, y1, w, h)
-		drawer.draw_image(self.image2, x2, y2, w, h)
+		drawer.draw_image(self.image[0], x1, y1, w, h)
+		drawer.draw_image(self.image[1], x2, y2, w, h)
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.

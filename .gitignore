@@ -6,3 +6,5 @@ test/test.tex
 tmp/
 test/ptah.tex
 test/ptah.pdf
+test/image.pdf
+test/image.tex

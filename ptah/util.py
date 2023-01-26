@@ -48,10 +48,19 @@ def parse_dict(data, base, props):
 	inherit from AttrMap and are assigned for any key of data not found
 	in props. Call check() on base in the end."""
 
+	print(props)
 	# pick the properties
-	for key in data:
+	for (key, val) in data.items():
 		try:
-			props[key].parse(data[key], base)
+			p = key.find('#')
+			if p < 0:
+				props[key].set(val, base)
+			else:
+				id = key[:p]
+				i = int(key[p+1:]) - 1
+				props[id].set_indexed(i, val, base)
+		except ValueError:
+			raise CheckError("bad index %s" % key)
 		except KeyError:
 			base.set_attr(key, data[key])
 

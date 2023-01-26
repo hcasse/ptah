@@ -2,28 +2,63 @@
 
 import os
 import ptah
-from ptah import util
+from ptah.util import CheckError
 
 class Property:
 	"""Property to describe a page or an album."""
 
-	def __init__(self, id, desc, req = False):
+	def __init__(self, id, desc, req = False, multi = False):
 		self.id = id
 		self.pid = id.replace("-", "_")
 		self.desc = desc
 		self.req = req
+		self.multi = multi
 
-	def parse(self, val, obj):
-		"""Parse the file value and assign it, if valid, to the object
+	def parse(self, text, obj):
+		"""Parse the given text and return the corresponding text.
+		Raises CheckError if the text is not valid."""
+		return text
+
+	def set(self, val, obj):
+		"""Parse the file value and set it, if valid, to the object
 		corresponding field. The default implementation performs
-		the assignment to the field without test."""
-		obj.__dict__[self.pid] = val
+		the assignment to the field without test. May raise
+		CheckError if the value is not valid."""
+		if self.multi:
+			raise CheckError("property %s must be indexed #i in %s." %
+				(self.id, obj.name))
+		obj.__dict__[self.pid] = self.parse(val, obj)
+
+	def is_indexed(self):
+		"""Test if the property supports indexes."""
+		return self.multi
+
+	def set_indexed(self, i, val, obj):
+		"""Same as parse() but with an array. In addition, may raise
+		CheckError if the index is too big."""
+		if not self.multi:
+			raise CheckError("property %s is not indexed in %s." %
+				(self.id, obj.name))
+		l = obj.__dict__[self.pid]
+		if i < 0 or i >= len(l):
+			raise CheckError("property %s#%d with bad index in %s." %
+				(self.id, i, obj.name))
+		l[i] = self.parse(val, obj)
 
 	def check(self, obj):
 		"""Check if the property is correctly set in the object."""
-		if self.req and obj.__dict__[self.pid] == None:
-			raise CheckError("property %s is required for %s" %
-				(self.id, obj.name))
+		if not self.req:
+			return
+		if not self.multi:
+			if obj.__dict__[self.pid] == None:
+				raise CheckError("property %s is required for %s!" %
+					(self.id, obj.name))
+		else:
+			l = obj.__dict__[self.pid]
+			for i in range(0, len(l)):
+				if l[i] == None:
+					raise CheckError("property %s#%d is required for %s!" %
+						(self.id, i+1, obj.name))
 
 	def get_description(self):
 		"""Get the description of the property."""
@@ -33,29 +68,29 @@ class Property:
 class ImageProperty(Property):
 	"""Property to pass an image."""
 
-	def __init__(self, id, desc, req = True):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, req = True, multi = False):
+		Property.__init__(self, id, desc, req, multi)
 
 	def parse(self, path, page):
 		if not os.path.exists(os.path.join(page.album.get_base(), path)):
-			raise util.CheckError("no image on path '%s'" % path)
-		Property.parse(self, path, page)
+			raise CheckError("no image on path '%s' for %s" %
+				(path, page.name))
+		return path
 
 
 class EnumProperty(Property):
 	"""A value from an enumeration."""
 
-	def __init__(self, id, desc, vals, req = False):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, vals, req = False, multi = False):
+		Property.__init__(self, id, desc, req, multi)
 		self.vals = vals
 
 	def parse(self, val, obj):
 		val = val.lower()
 		for i in range(0, len(self.vals)):
 			if val == self.vals[i]:
-				Property.parse(self, i, obj)
-				return
-		raise util.CheckError("in %s, %s must be one of %s" %
+				return i
+		raise CheckError("in %s, %s must be one of %s" %
 			(obj.name, id, ", ".join(self.vals)))
 
 	def get_description(self):
@@ -68,6 +103,7 @@ class StringProperty(Property):
 
 	def __init__(self, id, desc, req = False):
 		Property.__init__(self, id, desc, req)
+
 
 HTML_COLORS = {
 	"lightsalmon": "#FFA07A",
@@ -222,17 +258,15 @@ class ColorProperty(Property):
 			if len(col) == 7:
 				try:
 					int(col[1:], 16)
-					Property.parse(self, col, obj)
-					return
+					return col
 				except ValueError:
 					pass
 		else:
 			try:
-				Property.parse(self, HTML_COLORS[col], obj)
-				return
+				return HTML_COLORS[col]
 			except KeyError:
 				pass
-		raise util.CheckError("%s: bad color!" % self.id)
+		raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
 
 	def get_description(self):
 		return "named color or HTML color \\#RRGGBB."

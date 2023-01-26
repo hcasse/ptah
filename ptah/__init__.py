@@ -6,6 +6,7 @@ from ptah import format
 from ptah import props
 from ptah import util
 
+
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are
 	expressed in millimeters."""
@@ -82,6 +83,7 @@ class PagesProp(props.Property):
 	def parse(self, pages, album):
 		if not hasattr(pages, "__iter__"):
 			raise CheckError("pages should a be a list of pages!")
+		res = []
 		for desc in pages:
 
 			# get the page type
@@ -97,8 +99,11 @@ class PagesProp(props.Property):
 				raise CheckError("page type %s is unknown!" % type)
 
 			# initialize the page
-			album.add_page(page)
+			page.album = album
+			page.number = len(res)
+			res.append(page)
 			util.parse_dict(desc, page, page.get_props())
+		return res
 
 
 class FormatProp(props.Property):
@@ -108,7 +113,7 @@ class FormatProp(props.Property):
 
 	def parse(self, fmt, album):
 		try:
-			props.Property.parse(self, format.FORMATS[fmt.upper()], album)
+			return format.FORMATS[fmt.upper()]
 		except KeyError:
 			raise util.CheckError(self, "format %s is unknown" % fmt)
 
@@ -134,6 +139,7 @@ class Album(util.AttrMap):
 		self.title = "no title"
 		self.author = None
 		self.date = None
+		self.background_color = None
 
 	def get_base(self):
 		return self.base

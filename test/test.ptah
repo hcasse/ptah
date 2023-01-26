@@ -12,11 +12,11 @@ pages:
     image: photos/chem.jpeg
   - name: three
     type: duo
-    image1: photos/ice.jpeg
-    image2: photos/vulture.jpeg
+    image#1: photos/ice.jpeg
+    image#2: photos/vulture.jpeg
     background-color: papayawhip
   - name: four
     type: duo
     orientation: horizontal
-    image1: photos/hoang.jpg
-    image2: photos/sword.jpeg
+    image#1: photos/hoang.jpg
+    image#2: photos/sword.jpeg
