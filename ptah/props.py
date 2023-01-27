@@ -7,12 +7,11 @@ from ptah.util import CheckError
 class Property:
 	"""Property to describe a page or an album."""
 
-	def __init__(self, id, desc, req = False, multi = False):
+	def __init__(self, id, desc, req = False):
 		self.id = id
 		self.pid = id.replace("-", "_")
 		self.desc = desc
 		self.req = req
-		self.multi = multi
 
 	def parse(self, text, obj):
 		"""Parse the given text and return the corresponding text.
@@ -24,7 +23,7 @@ class Property:
 		corresponding field. The default implementation performs
 		the assignment to the field without test. May raise
 		CheckError if the value is not valid."""
-		if self.multi:
+		if hasattr(obj.__dict__[self.pid], "__setitem__"):
 			raise CheckError("property %s must be indexed #i in %s." %
 				(self.id, obj.name))
 		obj.__dict__[self.pid] = self.parse(val, obj)
@@ -36,10 +35,10 @@ class Property:
 	def set_indexed(self, i, val, obj):
 		"""Same as parse() but with an array. In addition, may raise
 		CheckError if the index is too big."""
-		if not self.multi:
-			raise CheckError("property %s is not indexed in %s." %
-				(self.id, obj.name))
 		l = obj.__dict__[self.pid]
+		if not hasattr(l, "__setitem__"):
+			raise CheckError("property %s is not indexed in %s." %
+				(self.id, obj.name))			
 		if i < 0 or i >= len(l):
 			raise CheckError("property %s#%d with bad index in %s." %
 				(self.id, i, obj.name))
@@ -49,8 +48,9 @@ class Property:
 		"""Check if the property is correctly set in the object."""
 		if not self.req:
 			return
-		if not self.multi:
-			if obj.__dict__[self.pid] == None:
+		l = obj.__dict__[self.pid]
+		if not hasattr(l, "__getitem__"):
+			if l == None:
 				raise CheckError("property %s is required for %s!" %
 					(self.id, obj.name))
 		else:
@@ -68,8 +68,8 @@ class Property:
 class ImageProperty(Property):
 	"""Property to pass an image."""
 
-	def __init__(self, id, desc, req = True, multi = False):
-		Property.__init__(self, id, desc, req, multi)
+	def __init__(self, id, desc, req = True):
+		Property.__init__(self, id, desc, req)
 
 	def parse(self, path, page):
 		if not os.path.exists(os.path.join(page.album.get_base(), path)):
@@ -81,8 +81,8 @@ class ImageProperty(Property):
 class EnumProperty(Property):
 	"""A value from an enumeration."""
 
-	def __init__(self, id, desc, vals, req = False, multi = False):
-		Property.__init__(self, id, desc, req, multi)
+	def __init__(self, id, desc, vals, req = False):
+		Property.__init__(self, id, desc, req)
 		self.vals = vals
 
 	def parse(self, val, obj):
@@ -103,6 +103,20 @@ class StringProperty(Property):
 
 	def __init__(self, id, desc, req = False):
 		Property.__init__(self, id, desc, req)
+
+
+class FloatProperty(Property):
+	"""Property supporting a float number."""
+
+	def __init__(self, id, desc, req = False):
+		Property.__init__(self, id, desc, req)
+
+	def parse(self, val, obj):
+		try:
+			return float(val)
+		except ValueError:
+			raise CheckError("value %s of %s should be a floatting-pointer number"
+				% (self.id, obj.name))
 
 
 HTML_COLORS = {

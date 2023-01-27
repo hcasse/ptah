@@ -4,12 +4,10 @@ import os
 import ptah
 from ptah import util
 from ptah import props
+from ptah.graph import *
 
 MINIATURE_BACK = "yellow!50!white"
 
-PROP_NAME = props.StringProperty("name", "name")
-PROP_IMAGE = props.ImageProperty("image", "image", req = True)
-PROP_IMAGES = props.ImageProperty("image", "image", req = True, multi = True)
 PROP_ORIENTATION = props.EnumProperty(
 	"orientation", "orientation", ["vertical", "horizontal"])
 
@@ -20,11 +18,10 @@ def add(props, prop):
 class CenterPage(ptah.Page):
 
 	NAME = "center"
-	PROPS = props.make(ptah.PAGE_PROPS + [PROP_NAME, PROP_IMAGE])
+	PROPS = props.make(ptah.PAGE_PROPS)
 
 	def __init__(self):
 		ptah.Page.__init__(self)
-		self.image = None
 
 	def get_props(self):
 		return CenterPage.PROPS
@@ -32,8 +29,8 @@ class CenterPage(ptah.Page):
 	def gen(self, drawer):
 		drawer.draw_image(
 			self.image,
-			0, 0,
-			drawer.width, drawer.height
+			Box(0, 0, drawer.width, drawer.height),
+			self.get_style()
 		)
 
 	def gen_miniature(drawer):
@@ -49,19 +46,15 @@ class CenterPage(ptah.Page):
 			"image"
 		)
 
+
 # Duo page
 class DuoPage(ptah.Page):
 
 	NAME = "duo"
-	PROPS = props.make(ptah.PAGE_PROPS + [
-		PROP_NAME,
-		PROP_IMAGES,
-		PROP_ORIENTATION
-	])
+	PROPS = props.make(ptah.PAGE_PROPS + [PROP_ORIENTATION])
 
 	def __init__(self):
-		ptah.Page.__init__(self)
-		self.image = [ None, None ]
+		ptah.Page.__init__(self, 2)
 		self.orientation = 0
 
 	def get_props(self):
@@ -82,8 +75,16 @@ class DuoPage(ptah.Page):
 			x2 = w + drawer.sep
 			y2 = 0
 			h = drawer.height
-		drawer.draw_image(self.image[0], x1, y1, w, h)
-		drawer.draw_image(self.image[1], x2, y2, w, h)
+		drawer.draw_image(
+			self.image[0],
+			Box(x1, y1, w, h),
+			self.get_style(0)
+		)
+		drawer.draw_image(
+			self.image[1],
+			Box(x2, y2, w, h),
+			self.get_style(1)
+		)
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.

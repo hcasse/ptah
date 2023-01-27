@@ -5,7 +5,11 @@ import yaml
 from ptah import format
 from ptah import props
 from ptah import util
+from ptah.graph import Style
 
+MODE_FIT = 0
+MODE_STRETCH = 1
+MODE_FILL = 2
 
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are
@@ -18,7 +22,9 @@ class Drawer:
 		self.height = self.format.body_height()
 		self.sep = self.format.column_sep
 
-	def draw_image(self, path, x, y, w, h):
+	def draw_image(self, path, box, style):
+		"""Draw an image from the given path in the given box with the
+		given style."""
 		pass
 
 	def draw_text(self, x, y, w, h, text):
@@ -30,9 +36,18 @@ class Drawer:
 
 
 BACKGROUND_COLOR_PROP = props.ColorProperty("background-color", "Color for background.")
+MODE_PROP = props.EnumProperty("mode", "image mode",
+	[ "fit", "stretch", "fill"  ])
+PROP_IMAGE = props.ImageProperty("image", "image", req = True)
+PROP_NAME = props.StringProperty("name", "name")
+PROP_SCALE = props.FloatProperty("scale", "image scale")
 
 PAGE_PROPS = [
-	BACKGROUND_COLOR_PROP
+	BACKGROUND_COLOR_PROP,
+	MODE_PROP,
+	PROP_IMAGE,
+	PROP_NAME,
+	PROP_SCALE
 ]
 
 
@@ -42,10 +57,29 @@ class Page(util.AttrMap):
 	NAME = ""
 	PROPS = {}
 
-	def __init__(self):
+	def __init__(self, n = 1):
 		util.AttrMap.__init__(self)
 		self.number = None
 		self.background_color = None
+		self.name = ""
+		if n == 1:
+			self.image = None
+			self.mode = MODE_FIT
+			self.scale = 1.
+		else:
+			self.image = [None] * n
+			self.mode = [MODE_FIT] * n
+			self.scale = [1.] * n
+
+	def get_style(self, i = -1):
+		if i == -1:
+			return Style(
+				mode = self.mode,
+				scale = self.scale)
+		else:
+			return Style(
+				mode = self.mode[i],
+				scale = self.scale[i])
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
@@ -132,8 +166,9 @@ class Album(util.AttrMap):
 
 	def __init__(self, path):
 		util.AttrMap.__init__(self)
+		self.name = "album"
 		self.path = path
-		self.pages = []
+		self.pages = None
 		self.base = os.path.dirname(path)
 		self.format = format.A4
 		self.title = "no title"

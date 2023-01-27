@@ -20,3 +20,16 @@ pages:
     orientation: horizontal
     image#1: photos/hoang.jpg
     image#2: photos/sword.jpeg
+  - name: five
+    type: center
+    mode: stretch
+    image: photos/reed.jpeg
+  - name: five
+    type: center
+    mode: fill
+    image: photos/reed.jpeg
+  - name: six
+    type: center
+    mode: fill
+    image: photos/reed.jpeg
+    scale: 2.

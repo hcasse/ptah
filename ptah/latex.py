@@ -6,6 +6,7 @@ import ptah
 import ptah.format
 import ptah.props
 import subprocess
+from PIL import Image
 
 DEBUG = False
 MINIATURE_WIDTH = 30
@@ -45,7 +46,8 @@ class Drawer(ptah.Drawer):
 			os.chdir(dir)
 		subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
-			shell=True)
+			shell=True,
+			capture_output = True)
 		if dir != "":
 			os.chdir(cwd)
 
@@ -124,13 +126,48 @@ class Drawer(ptah.Drawer):
 		for (col, name) in self.colors.items():
 			write("\\definecolor{%s}{HTML}{%s}\n" % (name, col[1:]))
 
-	def draw_image(self, path, x, y, w, h):
-		x, y = self.remap(x, y)
-		self.out.write("\\node at(%smm, %smm) {" % (x+w/2., y-h/2))
-		self.out.write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
-			% (w, h, path));
-		self.out.write("};\n")
+	def get_size(self, path):
+		i = Image.open(path)
+		return i.size
 
+	def draw_image(self, path, box, style):
+		write = self.out.write
+		x, y = self.remap(box.centerx(), box.centery())
+		W, H = box.w, box.h
+
+		if style.mode == ptah.MODE_FIT:
+			write("\\node at(%smm, %smm) {" % (x, y))
+			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
+				% (box.w, box.h, path));
+			write("};\n")
+
+		elif style.mode == ptah.MODE_STRETCH:
+			write("\\node at(%smm, %smm) {" % (x, y))
+			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}"
+				% (box.w, box.h, path));
+			write("};\n")
+
+		elif style.mode == ptah.MODE_FILL:
+			w, h = self.get_size(path)
+			rx = W / w
+			ry = H / h
+			write("\\begin{scope}\n")
+			write("\\clip (%smm, %smm) rectangle(%smm, %smm);\n"
+				% (x - W/2, y - H/2, x + W/2, y + H/2))
+			write("\\node at(%smm, %smm) {" % (x, y))
+			if w/h < W/H:
+				write("\\includegraphics[width=%smm, keepaspectratio]{%s}"
+					% (W * style.scale, path));
+			else:
+				write("\\includegraphics[height=%smm, keepaspectratio]{%s}"
+					% (H * style.scale, path));
+			write("};\n")
+			write("\\end{scope}\n")
+			
+		else:
+			print("ERROR: unknown mode", style.mode)
+			exit(1)
+			
 	def remap(self, x, y):
 		return (x - self.dx, self.dy - y)
 

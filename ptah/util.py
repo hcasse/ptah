@@ -48,7 +48,6 @@ def parse_dict(data, base, props):
 	inherit from AttrMap and are assigned for any key of data not found
 	in props. Call check() on base in the end."""
 
-	print(props)
 	# pick the properties
 	for (key, val) in data.items():
 		try:
