@@ -162,18 +162,35 @@ class Drawer(ptah.Drawer):
 			write("};\n")
 
 		elif style.mode == ptah.MODE_FILL:
+
+			# compute configuration
 			w, h = self.get_size(path)
 			anchor,dx, dy = ALIGN[style.align](W, H)
+			if w/h < W/H:
+				sw = W * style.scale
+				param = "width=%smm" % sw
+				if style.xshift != None:
+					dx += sw * style.xshift / 100.
+				if style.yshift != None:
+					sh = h * W / w * style.scale
+					dy -= sh * style.yshift / 100.
+			else:
+				sh = H * style.scale
+				param = "height=%smm" % sh
+				if style.xshift != None:
+					sw = w * H / h * style.scale
+					dx += sw * style.xshift / 100.
+				if style.yshift != None:
+					dy -= sh * style.yshift / 100.
+
+			# generate the code
 			write("\\begin{scope}\n")
 			write("\\clip (%smm, %smm) rectangle(%smm, %smm);\n"
 				% (x - W/2, y - H/2, x + W/2, y + H/2))
-			write("\\node[%s] at(%smm, %smm) {" % (anchor, x + dx, y + dy))
-			if w/h < W/H:
-				write("\\includegraphics[width=%smm, keepaspectratio]{%s}"
-					% (W * style.scale, path));
-			else:
-				write("\\includegraphics[height=%smm, keepaspectratio]{%s}"
-					% (H * style.scale, path));
+			write("\\node[%s] at(%smm, %smm) {"
+				% (anchor, x + dx, y + dy))
+			write("\\includegraphics[%s, keepaspectratio]{%s}"
+				% (param, path));
 			write("};\n")
 			write("\\end{scope}\n")
 			

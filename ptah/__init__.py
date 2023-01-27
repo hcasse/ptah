@@ -54,6 +54,10 @@ ALIGN_PROP = props.EnumProperty("align", "image alignment",
 IMAGE_PROP = props.ImageProperty("image", "image", req = True)
 NAME_PROP = props.StringProperty("name", "name")
 SCALE_PROP = props.FloatProperty("scale", "image scale")
+HORIZONTAL_SHIFT_PROP = props.FloatProperty("horizontal-shift",
+	"shift in % of the image width")
+VERTICAL_SHIFT_PROP = props.FloatProperty("vertical-shift",
+	"shift in % of the image height")
 
 PAGE_PROPS = [
 	BACKGROUND_COLOR_PROP,
@@ -61,7 +65,9 @@ PAGE_PROPS = [
 	IMAGE_PROP,
 	NAME_PROP,
 	SCALE_PROP,
-	ALIGN_PROP
+	ALIGN_PROP,
+	HORIZONTAL_SHIFT_PROP,
+	VERTICAL_SHIFT_PROP
 ]
 
 
@@ -81,23 +87,31 @@ class Page(util.AttrMap):
 			self.mode = MODE_FIT
 			self.scale = 1.
 			self.align = ALIGN_CENTER
+			self.horizontal_shift = None
+			self.vertical_shift = None
 		else:
 			self.image = [None] * n
 			self.mode = [MODE_FIT] * n
 			self.scale = [1.] * n
 			self.align = [ALIGN_CENTER] * n
+			self.horizontal_shift = [None] * n
+			self.vertical_shift = [None] * n
 
 	def get_style(self, i = -1):
 		if i == -1:
 			return Style(
 				mode = self.mode,
 				scale = self.scale,
-				align = self.align)
+				align = self.align,
+				xshift = self.horizontal_shift,
+				yshift = self.vertical_shift)
 		else:
 			return Style(
 				mode = self.mode[i],
 				scale = self.scale[i],
-				align = self.align[i])
+				align = self.align[i],
+				xshift = self.horizontal_shift[i],
+				yshift = self.vertical_shift[i])
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.

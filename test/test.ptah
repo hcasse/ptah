@@ -52,3 +52,9 @@ pages:
     type: center
     image: photos/woman.jpg
     align: top
+
+  - name: ten
+    type: center
+    mode: fill
+    image: photos/reed.jpeg
+    horizontal-shift: 50

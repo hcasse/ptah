@@ -55,7 +55,14 @@ class Box:
 
 class Style:
 
-	def __init__(self, mode, scale = None, align = 0):
+	def __init__(self, mode,
+		scale = None,
+		align = 0,
+		xshift = None,
+		yshift = None
+	):
 		self.mode = mode
 		self.scale = scale
 		self.align = align
+		self.xshift = xshift
+		self.yshift = yshift
