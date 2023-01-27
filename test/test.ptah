@@ -4,32 +4,51 @@ date: 24/01/2023
 format: a4
 background-color: ivory
 pages:
+
   - name: first
     type: center
     image: photos/reed.jpeg
+
   - name: second
     type: center
     image: photos/chem.jpeg
+
   - name: three
     type: duo
     image#1: photos/ice.jpeg
     image#2: photos/vulture.jpeg
     background-color: papayawhip
+
   - name: four
     type: duo
     orientation: horizontal
     image#1: photos/hoang.jpg
     image#2: photos/sword.jpeg
+
   - name: five
     type: center
     mode: stretch
     image: photos/reed.jpeg
-  - name: five
-    type: center
-    mode: fill
-    image: photos/reed.jpeg
+
   - name: six
     type: center
     mode: fill
     image: photos/reed.jpeg
+
+  - name: seven
+    type: center
+    mode: fill
+    image: photos/reed.jpeg
     scale: 2.
+
+  - name: eight
+    type: center
+    mode: fill
+    image: photos/reed.jpeg
+    scale: 1.5
+    align: bottom
+
+  - name: nine
+    type: center
+    image: photos/woman.jpg
+    align: top

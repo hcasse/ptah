@@ -12,6 +12,18 @@ DEBUG = False
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
 
+ALIGN = [
+	lambda w, h: ("", 0, 0),
+	lambda w, h: ("anchor = north", 0, h/2),
+	lambda w, h: ("anchor = north east", w/2, h/2),
+	lambda w, h: ("anchor = east", w/2, 0),
+	lambda w, h: ("anchor = south east", w/2, -h/2),
+	lambda w, h: ("anchor = south", 0, -h/2),
+	lambda w, h: ("anchor = south west", -w/2, -h/2),
+	lambda w, h: ("anchor = west", -w/2, 0),
+	lambda w, h: ("anchor = north west", -w/2, h/2)
+]
+
 PROLOG = \
 """
 \\usepackage[utf8]{inputenc}
@@ -136,7 +148,9 @@ class Drawer(ptah.Drawer):
 		W, H = box.w, box.h
 
 		if style.mode == ptah.MODE_FIT:
-			write("\\node at(%smm, %smm) {" % (x, y))
+			anchor,dx, dy = ALIGN[style.align](W, H)
+			write("\\node[%s] at(%smm, %smm) {"
+				% (anchor, x + dx, y + dy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
 				% (box.w, box.h, path));
 			write("};\n")
@@ -149,12 +163,11 @@ class Drawer(ptah.Drawer):
 
 		elif style.mode == ptah.MODE_FILL:
 			w, h = self.get_size(path)
-			rx = W / w
-			ry = H / h
+			anchor,dx, dy = ALIGN[style.align](W, H)
 			write("\\begin{scope}\n")
 			write("\\clip (%smm, %smm) rectangle(%smm, %smm);\n"
 				% (x - W/2, y - H/2, x + W/2, y + H/2))
-			write("\\node at(%smm, %smm) {" % (x, y))
+			write("\\node[%s] at(%smm, %smm) {" % (anchor, x + dx, y + dy))
 			if w/h < W/H:
 				write("\\includegraphics[width=%smm, keepaspectratio]{%s}"
 					% (W * style.scale, path));

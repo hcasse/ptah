@@ -11,6 +11,16 @@ MODE_FIT = 0
 MODE_STRETCH = 1
 MODE_FILL = 2
 
+ALIGN_CENTER = 0
+ALIGN_TOP = 1
+ALIGN_TOP_RIGHT = 2
+ALIGN_RIGHT = 3
+ALIGN_BOTTOM_RIGHT = 4
+ALIGN_BOTTOM = 5
+ALIGN_BOTTOM_LEFT = 6
+ALIGN_LEFT = 7
+ALIGN_TOP_LEFT = 8
+
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are
 	expressed in millimeters."""
@@ -38,16 +48,20 @@ class Drawer:
 BACKGROUND_COLOR_PROP = props.ColorProperty("background-color", "Color for background.")
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill"  ])
-PROP_IMAGE = props.ImageProperty("image", "image", req = True)
-PROP_NAME = props.StringProperty("name", "name")
-PROP_SCALE = props.FloatProperty("scale", "image scale")
+ALIGN_PROP = props.EnumProperty("align", "image alignment",
+	[ "center", "top", "top-right", "right", "bottom-right",
+	  "bottom", "bottom-left", "left", "top-left"])
+IMAGE_PROP = props.ImageProperty("image", "image", req = True)
+NAME_PROP = props.StringProperty("name", "name")
+SCALE_PROP = props.FloatProperty("scale", "image scale")
 
 PAGE_PROPS = [
 	BACKGROUND_COLOR_PROP,
 	MODE_PROP,
-	PROP_IMAGE,
-	PROP_NAME,
-	PROP_SCALE
+	IMAGE_PROP,
+	NAME_PROP,
+	SCALE_PROP,
+	ALIGN_PROP
 ]
 
 
@@ -66,20 +80,24 @@ class Page(util.AttrMap):
 			self.image = None
 			self.mode = MODE_FIT
 			self.scale = 1.
+			self.align = ALIGN_CENTER
 		else:
 			self.image = [None] * n
 			self.mode = [MODE_FIT] * n
 			self.scale = [1.] * n
+			self.align = [ALIGN_CENTER] * n
 
 	def get_style(self, i = -1):
 		if i == -1:
 			return Style(
 				mode = self.mode,
-				scale = self.scale)
+				scale = self.scale,
+				align = self.align)
 		else:
 			return Style(
 				mode = self.mode[i],
-				scale = self.scale[i])
+				scale = self.scale[i],
+				align = self.align[i])
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
