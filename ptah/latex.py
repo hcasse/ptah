@@ -262,6 +262,7 @@ class DocDrawer(Drawer):
 
 	def __init__(self):
 		Drawer.__init__(self, ptah.Album("ptah.ptah"))
+		self.album.pages = []
 
 		for col in ptah.props.HTML_COLORS.values():
 			self.declare_color(col)
@@ -287,6 +288,7 @@ class DocDrawer(Drawer):
 		write(DOC_SYNTAX)
 		write("\\paragraph{Properties}\n")
 		write("\\begin{description}\n")
+		write("\\setlength\\itemsep{-1mm}\n")
 		for prop in ptah.ALBUM_PROPS.values():
 			write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
 		write("\\end{description}\n")
@@ -327,8 +329,8 @@ class DocDrawer(Drawer):
 			write("\\begin{minipage}{.6\\textwidth}\n")
 			write("\\paragraph{Type:} %s\n" % page.NAME)
 			write("\\begin{description}\n")
+			write("\\setlength\\itemsep{-1mm}\n")
 			for prop in page.PROPS.values():
-				print(prop)
 				write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
 			write("\\end{description}\n")
 			write("\\end{minipage}\n\n\\bigskip")

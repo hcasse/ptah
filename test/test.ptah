@@ -56,5 +56,5 @@ pages:
   - name: ten
     type: center
     mode: fill
-    image: photos/reed.jpeg
-    horizontal-shift: 50
+    image: photos/woman.jpg
+    horizontal-shift: 40
