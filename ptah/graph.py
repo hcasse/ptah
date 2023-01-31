@@ -90,3 +90,11 @@ class Drawer:
 	def declare_color(self, color):
 		"""Called to declare a color during the declaration phase."""
 		pass
+
+	def draw_miniature_image(self, label, box):
+		"""Draw image for miniature output."""
+		pass
+
+	def draw_miniature_text(self, bel, box):
+		"""Draw text for miniature output."""
+		pass

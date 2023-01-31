@@ -14,6 +14,8 @@ from ptah.wiki import markdown
 DEBUG = True
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
+MINIATURE_BACK = "yellow!50!white"
+
 
 ESCAPES = {
 	'%': '\\%',
@@ -70,6 +72,11 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"tikz",
 			"xcolor"
 		]
+		self.tikz_packages = {
+			"patterns",
+			"patterns.meta",
+			"shapes.geometric"
+		}
 		self.doctype = "book"
 		syntax = markdown.make(self)
 		syntax.add_token(wiki.ReplaceToken(
@@ -178,6 +185,8 @@ class Drawer(graph.Drawer, wiki.Handler):
 		write(PROLOG)
 		for pack in self.packages:
 			write("\\usepackage{%s}\n" % pack)
+		for pack in self.tikz_packages:
+			write("\\usetikzlibrary{%s}\n" % pack)
 		write("\\title{%s}\n" % self.album.title)
 		write("\\author{%s}\n" % self.album.author)
 		write("\\date{%s}\n" % self.album.date)
@@ -259,17 +268,6 @@ class Drawer(graph.Drawer, wiki.Handler):
 	def remap(self, x, y):
 		return (x - self.dx, self.dy - y)
 
-	def draw_box(self, x, y, w, h, draw = "black", fill = None):
-		x, y = self.remap(x, y)
-		self.out.write("\\node[")
-		self.out.write("minimum width=%smm, " % w)
-		self.out.write("minimum height=%smm, " % h)
-		if draw != None:
-			self.out.write("draw=%s, " % draw)
-		if fill != None:
-			self.out.write("fill=%s, " % fill)
-		self.out.write("] at(%smm, %smm) {};\n" % (x+w/2., y-h/2.))
-
 	def draw_text(self, text, box):
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
@@ -298,6 +296,30 @@ class Drawer(graph.Drawer, wiki.Handler):
 		"""Add a package."""
 		if package not in self.packages:
 			self.packages.append(package)
+
+	def draw_miniature_image(self, label, box):
+		x, y = self.remap(box.centerx(), box.centery())
+		write = self.out.write
+		write("\\node[")
+		write("minimum width=%smm, " % box.w)
+		write("minimum height=%smm, " % box.h)
+		write("draw, fill=%s" % MINIATURE_BACK)
+		write("] at(%smm, %smm) {};\n" % (x, y))
+		write("\\node[opacity=.5, fill=lightgray, ellipse, minimum width=%smm, minimum height=%smm]"
+			% (box.h * 0.8 / 1.5, box.h * 0.8));
+		write(" at(%smm, %smm) {};\n" % (x, y))
+		write("\\node at(%smm, %smm) {%s};\n" % (x, y, label))
+
+	def draw_miniature_text(self, label, box):
+		x, y = self.remap(box.centerx(), box.centery())
+		write = self.out.write
+		write("\\node[")
+		write("minimum width=%smm, " % box.w)
+		write("minimum height=%smm, " % box.h)
+		write("pattern={Lines[line width=1mm, distance=1.5mm]},pattern color=lightgray")
+		write("] at(%smm, %smm) {%s};\n" % (x, y, label))
+
+
 
 DOC_SYNTAX = """
 \\maketitle
