@@ -6,11 +6,43 @@ import ptah
 import ptah.format
 import ptah.props
 import subprocess
+from ptah import graph
 from PIL import Image
 
-DEBUG = False
+DEBUG = True
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
+
+ESCAPES = {
+	'%': '\\%',
+	'<': '{$<$}',
+	'>': '{$>$}',
+	'_': '\\_',
+	'^': '\\^{}',
+	'&'	: '\\&',
+	'$'	: '\\$',
+	'#'	: '\\#',
+	'_'	: '\\_',
+	'{'	: '\\{',
+	'}'	: '\\}',
+	'~'	: '{$\sim$}',
+	'\\': '{$\\backslash$}'
+}
+
+
+def escape(text):
+	res = ""
+	start = 0
+	for i in range(0, len(text)):
+		if text[i] in ESCAPES:
+			if start != i:
+				res = res + text[start:i - start]
+			res = res + ESCAPES[text[i]]
+			start = i + 1
+	if start != len(text):
+		res = res + text[start:]
+	return res
+
 
 ALIGN = [
 	lambda w, h: ("", 0, 0),
@@ -29,10 +61,10 @@ PROLOG = \
 \\usepackage[utf8]{inputenc}
 """
 
-class Drawer(ptah.Drawer):
+class Drawer(graph.Drawer):
 
 	def __init__(self, album = None):
-		ptah.Drawer.__init__(self, album)
+		graph.Drawer.__init__(self, album)
 		self.dx = self.width / 2.
 		self.dy = self.height / 2.
 		self.colors = {}
@@ -59,7 +91,7 @@ class Drawer(ptah.Drawer):
 		subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
 			shell=True,
-			capture_output = True)
+			capture_output = DEBUG)
 		if dir != "":
 			os.chdir(cwd)
 
@@ -212,13 +244,17 @@ class Drawer(ptah.Drawer):
 			self.out.write("fill=%s, " % fill)
 		self.out.write("] at(%smm, %smm) {};\n" % (x+w/2., y-h/2.))
 
-	def draw_text(self, x, y, w, h, text):
-		x, y = self.remap(x, y)
-		self.out.write("\\node[")
-		self.out.write("minimum width=%smm, " % w)
-		self.out.write("minimum height=%smm, " % h)
-		self.out.write("] at(%smm, %smm) {%s};\n"
-			% (x+w/2., y-h/2., text))
+	def draw_text(self, text, box):
+		write = self.out.write
+		x, y = self.remap(box.centerx(), box.centery())
+		if DEBUG:
+			write("\\node[minimum width=%smm, minimum height=%smm, draw] at(%smm, %smm) {};\n"
+				% (box.w, box.h, x, y)) 
+		write("\\node[")
+		write("minimum width=%smm, " % box.w)
+		write("minimum height=%smm, " % box.h)
+		write("align=center] at(%smm, %smm) {%s};\n"
+			% (x, y, escape(text)))
 
 	def declare_color(self, color):
 		"""Declare a new used color."""
@@ -290,7 +326,8 @@ class DocDrawer(Drawer):
 		write("\\begin{description}\n")
 		write("\\setlength\\itemsep{-1mm}\n")
 		for prop in ptah.ALBUM_PROPS.values():
-			write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
+			write("\\item[%s] %s\n"
+				% (prop.id, escape(prop.get_description())))
 		write("\\end{description}\n")
 
 		# generate format list
@@ -331,7 +368,8 @@ class DocDrawer(Drawer):
 			write("\\begin{description}\n")
 			write("\\setlength\\itemsep{-1mm}\n")
 			for prop in page.PROPS.values():
-				write("\\item[%s] %s\n" % (prop.id, prop.get_description()))
+				write("\\item[%s] %s\n" %
+					(prop.id, escape(prop.get_description())))
 			write("\\end{description}\n")
 			write("\\end{minipage}\n\n\\bigskip")
 

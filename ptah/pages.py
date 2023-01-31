@@ -10,6 +10,8 @@ MINIATURE_BACK = "yellow!50!white"
 
 PROP_ORIENTATION = props.EnumProperty(
 	"orientation", "orientation", ["vertical", "horizontal"])
+TEXT_PROP = props.StringProperty("text", "Page text.")
+
 
 def add(props, prop):
 	props[prop.id] = prop
@@ -18,20 +20,30 @@ def add(props, prop):
 class CenterPage(ptah.Page):
 
 	NAME = "center"
-	PROPS = props.make(ptah.PAGE_PROPS)
+	PROPS = props.make(ptah.PAGE_PROPS + [TEXT_PROP])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
+		self.text = None
 
 	def get_props(self):
 		return CenterPage.PROPS
 
 	def gen(self, drawer):
+		if self.text != None:
+			h = drawer.height - 12
+		else:
+			h = drawer.height
 		drawer.draw_image(
 			self.image,
-			Box(0, 0, drawer.width, drawer.height),
+			Box(0, 0, drawer.width, h),
 			self.get_style()
 		)
+		if self.text != None:
+			drawer.draw_text(
+				self.text,
+				Box(0, h + 2, drawer.width, 10)
+			)
 
 	def gen_miniature(drawer):
 		drawer.draw_box(
@@ -41,9 +53,8 @@ class CenterPage(ptah.Page):
 			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
-			0, 0,
-			drawer.width, drawer.height,
-			"image"
+			"image",
+			Box(0, 0, drawer.width, drawer.height)
 		)
 
 
@@ -95,9 +106,8 @@ class DuoPage(ptah.Page):
 			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
-			0, 0,
-			drawer.width, h,
-			"image1"
+			"image1",
+			Box(0, 0, drawer.width, h)
 		)
 		drawer.draw_box(
 			0, h+2,
@@ -106,9 +116,8 @@ class DuoPage(ptah.Page):
 			fill = MINIATURE_BACK
 		)
 		drawer.draw_text(
-			0, h+2,
-			drawer.width, h,
-			"image2"
+			"image2",
+			Box(0, h+2, drawer.width, h)
 		)
 
 

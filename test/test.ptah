@@ -58,3 +58,8 @@ pages:
     mode: fill
     image: photos/woman.jpg
     horizontal-shift: 40
+
+  - name: eleven
+    type: center
+    image: photos/sword.jpeg
+    text: Sword Game in the Forest

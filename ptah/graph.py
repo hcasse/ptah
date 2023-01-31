@@ -66,3 +66,27 @@ class Style:
 		self.align = align
 		self.xshift = xshift
 		self.yshift = yshift
+
+
+class Drawer:
+	"""Handler for drawing content of a page. Position and sizes are
+	expressed in millimeters."""
+
+	def __init__(self, album):
+		self.album = album
+		self.format = album.format
+		self.width = self.format.body_width()
+		self.height = self.format.body_height()
+		self.sep = self.format.column_sep
+
+	def draw_image(self, path, box, style):
+		"""Draw an image from the given path in the given box with the
+		given style."""
+		pass
+
+	def draw_text(self, box, text):
+		pass
+
+	def declare_color(self, color):
+		"""Called to declare a color during the declaration phase."""
+		pass
