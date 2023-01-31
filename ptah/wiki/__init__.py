@@ -104,7 +104,7 @@ class Syntax:
 
 	def make_re(self, tokens, map):
 		r = ""
-		if self.tokens != []:
+		if tokens != []:
 			t = tokens[0]
 			r = "(?P<%s>%s)" % (t.name, t.re)
 			map[t.name] = t
@@ -129,6 +129,7 @@ class Syntax:
 		self.map[match.lastgroup].on_found(match[0], parser)
 
 	def on_line_token(self, match, parser):
+		print("DEBUG:", match)
 		return self.line_map[match.lastgroup].on_found(match[0], parser)
 
 	def on_text(self, text, parser):
@@ -176,21 +177,22 @@ class Parser:
 		for line in lines:
 
 			# Is there a line
-			m = self.stack[-1].syntax.get_line_re().match(line)
-			if m != None:
-				line = self.stack[-1].syntax.on_line_token(m, self)
-				if line == "":
-					continue
+			if self.stack[-1].syntax.line_tokens != []:
+				m = self.stack[-1].syntax.get_line_re().match(line)
+				if m != None:
+					line = self.stack[-1].syntax.on_line_token(m, self)
+					if line == "":
+						continue
 
 			# parse the text
 			p = 0
 			while p < len(line):
 				m = self.stack[-1].syntax.get_re().search(line, p)
-				if m ==  None:
+				if m == None:
 					self.on_text(line[p:])
 					break
 				else:
-					if p < m.start():
+					if p <= m.start():
 						self.on_text(line[p:m.start()])
 						self.stack[-1].syntax.on_token(m, self)
 						p = m.end()

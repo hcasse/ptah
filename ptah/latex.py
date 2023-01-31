@@ -72,11 +72,8 @@ class Drawer(graph.Drawer, wiki.Handler):
 		]
 		self.doctype = "book"
 		syntax = markdown.make(self)
-		syntax.add_token(wiki.ReplaceToken("latex_escape", {
-			"%": "\\%",
-			"{": "\\{",
-			"}": "\\}"
-		}, syntax.on_text))
+		syntax.add_token(wiki.ReplaceToken(
+			"latex_escape", ESCAPES, syntax.on_text))
 		self.wiki = wiki.Parser(syntax)
 		self.reset_wiki()
 
@@ -346,6 +343,15 @@ class DocDrawer(Drawer):
 			MINIATURE_HEIGHT,
 			2)
 		self.mini_drawer = Drawer(self.mini)
+
+		syntax = wiki.Syntax("latex-escape", self, [], [])
+		syntax.add_token(wiki.ReplaceToken(
+			"latex_escape", ESCAPES, syntax.on_text))
+		self.wiki = wiki.Parser(syntax)
+
+	def write_text(self, text):
+		self.reset_wiki()
+		self.wiki.parse_text(text)
 		
 	def gen_body(self):
 		write = self.out.write
@@ -357,8 +363,9 @@ class DocDrawer(Drawer):
 		write("\\begin{description}\n")
 		write("\\setlength\\itemsep{-1mm}\n")
 		for prop in ptah.ALBUM_PROPS.values():
-			write("\\item[%s] %s\n"
-				% (prop.id, escape(prop.get_description())))
+			write("\\item[%s]" % prop.id)
+			self.write_text(prop.get_description())
+			write("\n")
 		write("\\end{description}\n")
 
 		# generate format list
@@ -399,10 +406,21 @@ class DocDrawer(Drawer):
 			write("\\begin{description}\n")
 			write("\\setlength\\itemsep{-1mm}\n")
 			for prop in page.PROPS.values():
-				write("\\item[%s] %s\n" %
-					(prop.id, escape(prop.get_description())))
+				write("\\item[%s]" % prop.id)
+				self.write_text(prop.get_description())
+				write("\n")
 			write("\\end{description}\n")
 			write("\\end{minipage}\n\n\\bigskip")
+
+		# dump text
+		write("\\section{Text format}\n")
+		write("Subset of MarkDown format:\n")
+		write("\\begin{description}\n")
+		write("\\item[**text**, \_\_text\_\_] Bold.")
+		write("\\item[*text*, \_text\_] Italic.")
+		write("\\item[blank line] New paragraph.")
+		write("\\end{description}\n")
+		write("More to come.")
 
 		# dump colors
 		write("\\section{Colors}\n")
