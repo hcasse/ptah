@@ -7,7 +7,9 @@ import ptah.format
 import ptah.props
 import subprocess
 from ptah import graph
+from ptah import wiki
 from PIL import Image
+from ptah.wiki import markdown
 
 DEBUG = True
 MINIATURE_WIDTH = 30
@@ -29,19 +31,11 @@ ESCAPES = {
 	'\\': '{$\\backslash$}'
 }
 
-
-def escape(text):
-	res = ""
-	start = 0
-	for i in range(0, len(text)):
-		if text[i] in ESCAPES:
-			if start != i:
-				res = res + text[start:i - start]
-			res = res + ESCAPES[text[i]]
-			start = i + 1
-	if start != len(text):
-		res = res + text[start:]
-	return res
+STYLES = {
+	wiki.TYPE_BOLD: "\\textbf{",
+	wiki.TYPE_ITALIC: "\\textit{",
+	wiki.TYPE_CODE: "\\texttt{"
+}
 
 
 ALIGN = [
@@ -61,7 +55,7 @@ PROLOG = \
 \\usepackage[utf8]{inputenc}
 """
 
-class Drawer(graph.Drawer):
+class Drawer(graph.Drawer, wiki.Handler):
 
 	def __init__(self, album = None):
 		graph.Drawer.__init__(self, album)
@@ -77,7 +71,42 @@ class Drawer(graph.Drawer):
 			"xcolor"
 		]
 		self.doctype = "book"
+		syntax = markdown.make(self)
+		syntax.add_token(wiki.ReplaceToken("latex_escape", {
+			"%": "\\%",
+			"{": "\\{",
+			"}": "\\}"
+		}, syntax.on_text))
+		self.wiki = wiki.Parser(syntax)
+		self.reset_wiki()
 
+	# wiki.Handler functions
+	def reset_wiki(self):
+		self.one_par = False
+
+	def on_text(self, text):
+		self.out.write(text)
+
+	def begin_style(self, style):
+		try:
+			self.out.write(STYLES[style])
+		except KeyError:
+			pass
+
+	def end_style(self, style):
+		if style in STYLES:
+			self.out.write("}")
+
+	def begin_par(self):
+		if not self.one_par:
+			self.one_par = True
+		else:
+			self.out.write("\n")
+
+	def on_line_end(self):
+		self.out.write("\n")
+
+	# Drawer functions
 	def gen(self):
 
 		# generate Latex file
@@ -253,8 +282,10 @@ class Drawer(graph.Drawer):
 		write("\\node[")
 		write("minimum width=%smm, " % box.w)
 		write("minimum height=%smm, " % box.h)
-		write("align=center] at(%smm, %smm) {%s};\n"
-			% (x, y, escape(text)))
+		write("align=center] at(%smm, %smm) {" % (x, y))
+		self.reset_wiki()
+		self.wiki.parse_text(text)
+		write("};\n")
 
 	def declare_color(self, color):
 		"""Declare a new used color."""

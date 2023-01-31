@@ -33,6 +33,15 @@ class Handler:
 		"""Called when simple text is found."""
 		pass
 
+	def begin_par(self):
+		pass
+
+	def end_par(self):
+		pass
+
+	def on_line_end(self):
+		pass
+
 
 class Token:
 	"""A token, i.e. a family of words scanned by an RE."""
@@ -43,18 +52,29 @@ class Token:
 
 	def on_found(self, word, parser):
 		"""Action called when the token is found."""
-		pass
+		return ""
+
+
+class FunToken(Token):
+
+	def __init__(self, name, re, fun):
+		Token.__init__(self, name, re)
+		self.fun = fun
+
+	def on_found(self, word, parser):
+		return self.fun(word, parser)
 
 
 class Syntax:
 	"""A collection of tokens."""
 
-	def __init__(self, name, handler, tokens):
+	def __init__(self, name, handler, tokens, line_tokens):
 		self.name = name
 		self.handler = handler
 		self.tokens = tokens
-		self.map = {}
+		self.line_tokens = line_tokens
 		self.re = None
+		self.line_re = None
 		for token in tokens:
 			token.syntax = self
 
@@ -67,23 +87,49 @@ class Syntax:
 		self.tokens.remove(token)
 		token.syntax = None
 		self.re = None
+		if token.name in self.map:
+			del self.map[token.name]
+
+	def add_line_token(self, token):
+		self.line_tokens.append(token)
+		token.syntax = self
+		self.line_re = None
+
+	def remove_line_token(self, token):
+		self.line_tokens.remove(token)
+		token.syntax = None
+		self.line_re = None
+		if token.name in self.line_map:
+			del self.line_map[token.name]
+
+	def make_re(self, tokens, map):
+		r = ""
+		if self.tokens != []:
+			t = tokens[0]
+			r = "(?P<%s>%s)" % (t.name, t.re)
+			map[t.name] = t
+			for t in tokens[1:]:
+				r = "%s|(?P<%s>%s)" % (r, t.name, t.re)
+				map[t.name] = t
+		return re.compile(r)
 
 	def get_re(self):
 		if self.re == None:
-			self.re = ""
-			if self.tokens != []:
-				t = self.tokens[0]
-				self.re = "(?P<%s>%s)" % (t.name, t.re)
-				self.map[t.name] = t
-				for t in self.tokens[1:]:
-					self.re = "%s|(?P<%s>%s)" % (self.re, t.name, t.re)
-					self.map[t.name] = t
-			print("DEBUG:", self.re)
-			self.re = re.compile(self.re)
+			self.map = {}
+			self.re = self.make_re(self.tokens, self.map)
 		return self.re
+
+	def get_line_re(self):
+		if self.line_re == None:
+			self.line_map = {}
+			self.line_re = self.make_re(self.line_tokens, self.line_map)
+		return self.line_re
 			
 	def on_token(self, match, parser):
 		self.map[match.lastgroup].on_found(match[0], parser)
+
+	def on_line_token(self, match, parser):
+		return self.line_map[match.lastgroup].on_found(match[0], parser)
 
 	def on_text(self, text, parser):
 		"""Called when simple text is found."""
@@ -107,32 +153,64 @@ class Context:
 		pass
 
 
+class ParContext(Context):
+	"""Context for a paragraph."""
+
+	def __init__(self, syntax):
+		Context.__init__(self, syntax, LEVEL_PAR, TYPE_PAR)
+
+	def on_push(self, parser):
+		self.syntax.handler.begin_par()
+
+	def on_pop(self, parser):
+		self.syntax.handler.end_par()
+	
+
 class Parser:
 	"""Parser of wiki-like text."""
 
 	def __init__(self, syntax):
 		self.stack = [Context(syntax, LEVEL_DOC, TYPE_DOC)]
 
-	def parse_text(self, text):
-		p = 0
+	def parse(self, lines):
+		for line in lines:
 
-		# parse the text
-		while p < len(text):
-			m = self.stack[-1].syntax.get_re().search(text, p)
-			print("DEBUG:", m)
-			if m ==  None:
-				self.stack[-1].syntax.on_text(text[p:], self)
-				break
-			else:
-				if p < m.start():
-					self.stack[-1].syntax.on_text(text[p:m.start()], self)
-					self.stack[-1].syntax.on_token(m, self)
-					p = m.end()
+			# Is there a line
+			m = self.stack[-1].syntax.get_line_re().match(line)
+			if m != None:
+				line = self.stack[-1].syntax.on_line_token(m, self)
+				if line == "":
+					continue
+
+			# parse the text
+			p = 0
+			while p < len(line):
+				m = self.stack[-1].syntax.get_re().search(line, p)
+				if m ==  None:
+					self.on_text(line[p:])
+					break
+				else:
+					if p < m.start():
+						self.on_text(line[p:m.start()])
+						self.stack[-1].syntax.on_token(m, self)
+						p = m.end()
+			self.stack[-1].syntax.handler.on_line_end()
 
 		# pop the content of the stack
 		while len(self.stack) != 1:
 			self.stack[-1].on_pop(self)
 			self.stack.pop()
+
+	def parse_text(self, text):
+		self.parse(text.split('\n'))
+
+	def on_text(self, text):
+		"""Generate a text event ensuring the stack is in the right way."""
+		if self.stack[-1].level < LEVEL_PAR:
+			par = ParContext(self.stack[-1].syntax)
+			self.stack.append(par)
+			par.on_push(self)
+		self.stack[-1].syntax.on_text(text, self)
 
 	def push_exclusive(self, context):
 		"""Push a context excluding context of higher or same level."""
@@ -180,6 +258,17 @@ class Parser:
 			i = i - 1
 		return False
 
+	def pop_to(self, level):
+		while self.stack[-1].level >= level:
+			self.stack[-1].on_pop(self)
+			self.stack.pop()
+
+	def get_syntax(self):
+		return self.stack[-1].syntax
+
+	def get_handler(self):
+		return self.stack[-1].syntax.handler
+
 
 class SimpleToken(Token):
 	"""A token that call a function when it is found."""
@@ -214,6 +303,7 @@ class StyleToken(Token):
 
 	def on_found(self, word, parser):
 		parser.pushpop_style(StyleContext(self))
+		return ""
 
 
 class ReplaceToken(Token):
@@ -254,65 +344,3 @@ class StyleEndToken(Token):
 			self.syntax.handler.on_text(word)
 
 
-# Testing
-class LatexHandler(Handler):
-	STYLES = {
-		TYPE_BOLD: "\\textbf{",
-		TYPE_ITALIC: "\\textit{",
-		TYPE_CODE: "\\texttt{"
-	}
-
-	def __init__(self):
-		self.res = ""
-
-	def on_text(self, text):
-		self.res += text
-
-	def begin_style(self, style):
-		try:
-			self.res += LatexHandler.STYLES[style]
-		except KeyError:
-			pass
-
-	def end_style(self, style):
-		if style in LatexHandler.STYLES:
-			self.res += "}"
-
-
-class MarkdownSyntax(Syntax):
-
-	def __init__(self, handler):
-		Syntax.__init__(self, "markdown", handler, [
-
-			StyleEndToken("bold_end", "(?<=\S)(\\*\\*|__)", TYPE_BOLD),
-			StyleBeginToken("bold", "(\\*\\*|__)(?=\S)", TYPE_BOLD,
-				handler.begin_style, handler.end_style),
-
-			StyleEndToken("italic_end", "(?<=\S)[*_]", TYPE_ITALIC),
-			StyleBeginToken("italic", "[*_](?=\S)", TYPE_ITALIC,
-				handler.begin_style, handler.end_style),
-
-			StyleToken("code", "`", TYPE_CODE,
-				handler.begin_style, handler.end_style)
-		])
-
-		
-
-HANDLER = LatexHandler()
-SYNTAX = MarkdownSyntax(HANDLER)
-SYNTAX.add_token(ReplaceToken("latex_escape", {
-	"%": "\\%",
-	"{": "\\{",
-	"}": "\\}"
-}, SYNTAX.on_text))
-
-PARSER = Parser(SYNTAX)
-
-def test(text):
-	HANDLER.res = ""
-	print("BEFORE: ", text)
-	PARSER.parse_text(text)
-	print("DEBUG: res = ", HANDLER.res)
-
-test("ab{c%d}efg **123** 45 *ok* ko __1__ 2 _3_ 4")
-test("123`ab`45")
