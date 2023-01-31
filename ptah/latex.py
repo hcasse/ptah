@@ -11,7 +11,7 @@ from ptah import wiki
 from PIL import Image
 from ptah.wiki import markdown
 
-DEBUG = True
+DEBUG = False
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
 MINIATURE_BACK = "yellow!50!white"
@@ -105,7 +105,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		if not self.one_par:
 			self.one_par = True
 		else:
-			self.out.write("\n")
+			self.out.write("\\\\\n")
 
 	def on_line_end(self):
 		self.out.write("\n")
@@ -124,7 +124,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
 			shell=True,
-			capture_output = DEBUG)
+			capture_output = not DEBUG)
 		if dir != "":
 			os.chdir(cwd)
 

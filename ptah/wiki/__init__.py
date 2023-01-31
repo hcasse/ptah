@@ -129,7 +129,6 @@ class Syntax:
 		self.map[match.lastgroup].on_found(match[0], parser)
 
 	def on_line_token(self, match, parser):
-		print("DEBUG:", match)
 		return self.line_map[match.lastgroup].on_found(match[0], parser)
 
 	def on_text(self, text, parser):

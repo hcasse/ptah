@@ -63,3 +63,11 @@ pages:
     type: center
     image: photos/sword.jpeg
     text: Sword **Game** in the _Forest_
+
+  - name: twelve
+    type: center
+    image: photos/chem.jpeg
+    text: |
+      One line.
+
+      Another line.
