@@ -20,11 +20,15 @@ def add(props, prop):
 class CenterPage(ptah.Page):
 
 	NAME = "center"
-	PROPS = props.make(ptah.PAGE_PROPS + [TEXT_PROP])
+	PROPS = props.make(ptah.PAGE_PROPS + [
+		TEXT_PROP,
+		ptah.TEXT_ALIGN_PROP
+	])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
 		self.text = None
+		self.text_align = ptah.TEXT_ALIGN_CENTER
 
 	def get_props(self):
 		return CenterPage.PROPS
@@ -42,7 +46,8 @@ class CenterPage(ptah.Page):
 		if self.text != None:
 			drawer.draw_text(
 				self.text,
-				Box(0, h + 2, drawer.width, 10)
+				Box(0, h + 2, drawer.width, 10),
+				TextStyle(self)
 			)
 
 	def gen_miniature(drawer):

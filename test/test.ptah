@@ -67,6 +67,7 @@ pages:
   - name: twelve
     type: center
     image: photos/chem.jpeg
+    text-align: right
     text: |
       One line.
 

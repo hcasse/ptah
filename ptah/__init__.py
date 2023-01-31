@@ -21,6 +21,10 @@ ALIGN_BOTTOM_LEFT = 6
 ALIGN_LEFT = 7
 ALIGN_TOP_LEFT = 8
 
+TEXT_ALIGN_CENTER = 0
+TEXT_ALIGN_LEFT = 1
+TEXT_ALIGN_RIGHT = 2
+
 BACKGROUND_COLOR_PROP = props.ColorProperty("background-color", "Color for background.")
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill"  ])
@@ -34,6 +38,8 @@ HORIZONTAL_SHIFT_PROP = props.FloatProperty("horizontal-shift",
 	"shift in % of the image width")
 VERTICAL_SHIFT_PROP = props.FloatProperty("vertical-shift",
 	"shift in % of the image height")
+TEXT_ALIGN_PROP = props.EnumProperty("text-align", "text alignment.",
+	["center", "left", "right"])
 
 PAGE_PROPS = [
 	BACKGROUND_COLOR_PROP,

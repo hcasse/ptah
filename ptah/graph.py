@@ -68,6 +68,15 @@ class Style:
 		self.yshift = yshift
 
 
+class TextStyle:
+
+	def __init__(self, obj, i = None):
+		if i == None:
+			self.text_align = obj.text_align
+		else:
+			self.text_align = obj.text_align[i]
+
+
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are
 	expressed in millimeters."""
@@ -84,7 +93,7 @@ class Drawer:
 		given style."""
 		pass
 
-	def draw_text(self, box, text):
+	def draw_text(self, text, box, style):
 		pass
 
 	def declare_color(self, color):
