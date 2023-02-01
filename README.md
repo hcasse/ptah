@@ -35,8 +35,13 @@ containing the album file.
 ## How to install?
 
 
-## test photos
+## Test photos
 
+Many thanks to:
 * [PH](https://pxhere.com/)
 * [Unsplash](https://unsplash.com)
+
+## License
+
+Freely available under [GPL v3][file:LICENCE].
 

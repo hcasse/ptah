@@ -1,17 +1,20 @@
 """Management of properties for pages and album."""
 
 import os
+import re
+
 import ptah
 from ptah.util import CheckError
+from ptah import graph
 
 class Property:
 	"""Property to describe a page or an album."""
 
-	def __init__(self, id, desc, req = False):
+	def __init__(self, id, desc, mode = 0):
 		self.id = id
 		self.pid = id.replace("-", "_")
 		self.desc = desc
-		self.req = req
+		self.mode = mode
 
 	def parse(self, text, obj):
 		"""Parse the given text and return the corresponding text.
@@ -44,21 +47,45 @@ class Property:
 				(self.id, i, obj.name))
 		l[i] = self.parse(val, obj)
 
+	def lookup_parent(self, p):
+		p = p.parent
+		while(p != None):
+			if p.__dict__[self.pid] != None:
+				return p.__dict__[self.pid]
+		return None
+
 	def check(self, obj):
 		"""Check if the property is correctly set in the object."""
-		if not self.req:
-			return
-		l = obj.__dict__[self.pid]
-		if not hasattr(l, "__getitem__"):
-			if l == None:
-				raise CheckError("property %s is required for %s!" %
-					(self.id, obj.name))
-		else:
+
+		# mode required
+		if self.mode == 1:
 			l = obj.__dict__[self.pid]
-			for i in range(0, len(l)):
-				if l[i] == None:
-					raise CheckError("property %s#%d is required for %s!" %
-						(self.id, i+1, obj.name))
+			if not hasattr(l, "__getitem__"):
+				if l == None:
+					raise CheckError("property %s is required for %s!" %
+						(self.id, obj.name))
+			else:
+				l = obj.__dict__[self.pid]
+				for i in range(0, len(l)):
+					if l[i] == None:
+						raise CheckError("property %s#%d is required for %s!" %
+							(self.id, i+1, obj.name))
+
+		# mode inherited
+		elif self.mode == 2:
+			l = obj.__dict__[self.pid]
+			if not hasattr(l, "__getitem__"):
+				if l == None:
+					obj.__dict__[self.pid] = self.lookup_parent(obj)
+			else:
+				l = obj.__dict__[self.pid]
+				x = None
+				for i in range(0, len(l)):
+					if l[i] == None:
+						if x == None:
+							x = self.lookup_parent(obj)
+						l[i] = x
+			
 
 	def get_description(self):
 		"""Get the description of the property."""
@@ -68,8 +95,8 @@ class Property:
 class ImageProperty(Property):
 	"""Property to pass an image."""
 
-	def __init__(self, id, desc, req = True):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, mode = 1):
+		Property.__init__(self, id, desc, mode)
 
 	def parse(self, path, page):
 		if not os.path.exists(os.path.join(page.album.get_base(), path)):
@@ -81,8 +108,8 @@ class ImageProperty(Property):
 class EnumProperty(Property):
 	"""A value from an enumeration."""
 
-	def __init__(self, id, desc, vals, req = False):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, vals, mode = 0):
+		Property.__init__(self, id, desc, mode)
 		self.vals = vals
 
 	def parse(self, val, obj):
@@ -101,15 +128,15 @@ class EnumProperty(Property):
 class StringProperty(Property):
 	"""Simple string property."""
 
-	def __init__(self, id, desc, req = False):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, mode = 0):
+		Property.__init__(self, id, desc, mode)
 
 
 class FloatProperty(Property):
 	"""Property supporting a float number."""
 
-	def __init__(self, id, desc, req = False):
-		Property.__init__(self, id, desc, req)
+	def __init__(self, id, desc, mode = 0):
+		Property.__init__(self, id, desc, mode)
 
 	def parse(self, val, obj):
 		try:
@@ -263,8 +290,8 @@ HTML_COLORS = {
 
 class ColorProperty(Property):
 
-	def __init__(self, id, desc):
-		Property.__init__(self, id, desc)
+	def __init__(self, id, desc, mode = 0):
+		Property.__init__(self, id, desc, mode)
 
 	def parse(self, col, obj):
 		col = col.strip().lower()
@@ -284,6 +311,48 @@ class ColorProperty(Property):
 
 	def get_description(self):
 		return "named color or HTML color \\#RRGGBB."
+
+
+class LengthProperty(Property):
+
+	RE = re.compile("([+-]?[0-9\.]?)([a-zA-Z]+)")
+
+	UNITS = {
+		"mm": 1,
+		"cm": 10,
+		"dm": 100,
+		"in": 25.4,
+		"pt": 0.3514598
+	}
+
+	def __init__(self, id, desc, mode = 0):
+		Property.__init__(self, id, desc, mode)
+
+	def parse(self, val, obj):
+		try:
+			if val.endswith("%"):
+				return graph.PropLength(float(val[:-1]) / 100.)
+			elif isinstance(val, (int, float)):
+				return graph.AbsLength(val)
+			else: 
+				m = LengthProperty.RE.match(val)
+				if m != None:
+					return graph.AbsLength(
+						float(m.group(1)),
+						LengthProperty.UNITS[m.group(2)])
+		except (ValueError, KeyError):
+			pass
+		raise CheckError("bad length for %s in %s" % (self.id, obj.name))
+	
+	
+class Container:
+	"""Class that may contain containers."""
+
+	def __init__(self, parent = None):
+		self.parent = parent
+
+	def set_parent(self, parent):
+		self.parent = parent
 
 
 def make(props):

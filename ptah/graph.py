@@ -1,5 +1,36 @@
 """Module managing graphics."""
 
+class Length:
+	"""Represent a length - absolute in mm or proportional in %."""
+
+	def get(self, ref):
+		return 0
+
+class AbsLength(Length):
+	"""Represents an absolute length in mm."""
+
+	def __init__(self, val):
+		self.val = val
+
+	def get(self, ref):
+		return self.val
+
+	def __str__(self):
+		return str(self.val)
+
+class PropLength(Length):
+	"""Represents a length as proportional value between [0, 1]."""
+
+	def __init__(self, val):
+		self.val = val
+
+	def get(self, ref):
+		return ref * self.val
+
+	def __str__(self):
+		return str(self.val) + "%"
+	
+
 class Point:
 
 	def __init__(self, x, y):

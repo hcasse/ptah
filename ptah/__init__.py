@@ -7,6 +7,10 @@ from ptah import props
 from ptah import util
 from ptah.graph import Style
 
+PROP_OK = 0
+PROP_REQ = 1
+PROP_INH = 2
+
 MODE_FIT = 0
 MODE_STRETCH = 1
 MODE_FILL = 2
@@ -25,18 +29,19 @@ TEXT_ALIGN_CENTER = 0
 TEXT_ALIGN_LEFT = 1
 TEXT_ALIGN_RIGHT = 2
 
-BACKGROUND_COLOR_PROP = props.ColorProperty("background-color", "Color for background.")
+BACKGROUND_COLOR_PROP = props.ColorProperty(
+	"background-color", "Color for background.", mode = PROP_INH)
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill"  ])
 ALIGN_PROP = props.EnumProperty("align", "image alignment",
 	[ "center", "top", "top-right", "right", "bottom-right",
 	  "bottom", "bottom-left", "left", "top-left"])
-IMAGE_PROP = props.ImageProperty("image", "image", req = True)
+IMAGE_PROP = props.ImageProperty("image", "image", mode = PROP_REQ)
 NAME_PROP = props.StringProperty("name", "name")
 SCALE_PROP = props.FloatProperty("scale", "image scale")
-HORIZONTAL_SHIFT_PROP = props.FloatProperty("horizontal-shift",
+HORIZONTAL_SHIFT_PROP = props.LengthProperty("horizontal-shift",
 	"shift in % of the image width")
-VERTICAL_SHIFT_PROP = props.FloatProperty("vertical-shift",
+VERTICAL_SHIFT_PROP = props.LengthProperty("vertical-shift",
 	"shift in % of the image height")
 TEXT_ALIGN_PROP = props.EnumProperty("text-align", "text alignment.",
 	["center", "left", "right"])
@@ -53,7 +58,7 @@ PAGE_PROPS = [
 ]
 
 
-class Page(util.AttrMap):
+class Page(util.AttrMap, props.Container):
 	"""A page in the created album."""
 
 	NAME = ""
@@ -61,6 +66,7 @@ class Page(util.AttrMap):
 
 	def __init__(self, n = 1):
 		util.AttrMap.__init__(self)
+		props.Container.__init__(self)
 		self.number = None
 		self.background_color = None
 		self.name = ""
@@ -126,7 +132,7 @@ class Page(util.AttrMap):
 class PagesProp(props.Property):
 
 	def __init__(self):
-		props.Property.__init__(self, "pages", "list of pages", req = True)
+		props.Property.__init__(self, "pages", "list of pages", mode = PROP_REQ)
 
 	def parse(self, pages, album):
 		if not hasattr(pages, "__iter__"):
@@ -148,6 +154,7 @@ class PagesProp(props.Property):
 
 			# initialize the page
 			page.album = album
+			page.set_parent(album)
 			page.number = len(res)
 			res.append(page)
 			util.parse_dict(desc, page, page.get_props())
@@ -157,7 +164,7 @@ class PagesProp(props.Property):
 class FormatProp(props.Property):
 
 	def __init__(self):
-		props.Property.__init__(self, "format", "page format", req = True)
+		props.Property.__init__(self, "format", "page format", mode = PROP_REQ)
 
 	def parse(self, fmt, album):
 		try:

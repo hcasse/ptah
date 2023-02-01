@@ -57,7 +57,7 @@ pages:
     type: center
     mode: fill
     image: photos/woman.jpg
-    horizontal-shift: 40
+    horizontal-shift: 40%
 
   - name: eleven
     type: center
