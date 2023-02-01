@@ -23,7 +23,8 @@ class CenterPage(ptah.Page):
 	PROPS = props.make(ptah.PAGE_PROPS + [
 		TEXT_PROP,
 		ptah.TEXT_ALIGN_PROP,
-		ptah.TEXT_POS_PROP
+		ptah.TEXT_POS_PROP,
+		props.BoolProperty("inside", "insert text inside image.")
 	])
 
 	def __init__(self):
@@ -31,12 +32,13 @@ class CenterPage(ptah.Page):
 		self.text = None
 		self.text_align = ptah.TEXT_ALIGN_CENTER
 		self.text_pos = ptah.ALIGN_CENTER
+		self.inside = False
 
 	def get_props(self):
 		return CenterPage.PROPS
 
 	def gen(self, drawer):
-		if self.text != None:
+		if self.text != None and self.inside == False:
 			h = drawer.height - 12
 		else:
 			h = drawer.height
@@ -48,7 +50,7 @@ class CenterPage(ptah.Page):
 		if self.text != None:
 			drawer.draw_text(
 				self.text,
-				Box(0, h + 2, drawer.width, 10),
+				Box(0, drawer.height - 10, drawer.width, 10),
 				TextStyle(self)
 			)
 

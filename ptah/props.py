@@ -343,7 +343,20 @@ class LengthProperty(Property):
 		except (ValueError, KeyError):
 			pass
 		raise CheckError("bad length for %s in %s" % (self.id, obj.name))
-	
+
+
+class BoolProperty(Property):
+
+	def __init__(self, id, desc, mode = 0):
+		Property.__init__(self, id, desc, mode)
+
+	def parse(self, val, obj):
+		if val == False or val == True:
+			return val
+		else:
+			raise CheckError("bad boolean value for %s in %s."
+				% (self.id, obj.name))
+
 	
 class Container:
 	"""Class that may contain containers."""

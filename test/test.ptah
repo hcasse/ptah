@@ -73,3 +73,10 @@ pages:
       One line.
 
       Another line.
+
+  - name: thirteen
+    type: center
+    image: photos/chem.jpeg
+    text: Inclusive **test!**
+    inside: true
+    mode: fill
