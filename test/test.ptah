@@ -68,6 +68,7 @@ pages:
     type: center
     image: photos/chem.jpeg
     text-align: right
+    text-pos: right
     text: |
       One line.
 

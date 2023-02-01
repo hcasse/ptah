@@ -106,6 +106,10 @@ class TextStyle:
 			self.text_align = obj.text_align
 		else:
 			self.text_align = obj.text_align[i]
+		if i == None:
+			self.text_pos = obj.text_pos
+		else:
+			self.text_pos = obj.text_pos[i]
 
 
 class Drawer:

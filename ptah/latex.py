@@ -271,14 +271,15 @@ class Drawer(graph.Drawer, wiki.Handler):
 	def draw_text(self, text, box, style):
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
+		anc, dx, dy = ALIGN[style.text_pos](box.w, box.h)
 		if DEBUG:
 			write("\\node[minimum width=%smm, minimum height=%smm, draw] at(%smm, %smm) {};\n"
 				% (box.w, box.h, x, y)) 
 		write("\\node[")
-		write("minimum width=%smm, " % box.w)
-		write("minimum height=%smm, " % box.h)
-		write("align=%s] at(%smm, %smm) {"
-			% (TEXT_ALIGN[style.text_align], x, y))
+		write("text width=%smm, " % box.w)
+		#write("minimum height=%smm, " % box.h)
+		write("align=%s, %s] at(%smm, %smm) {"
+			% (TEXT_ALIGN[style.text_align], anc, x + dx, y + dy))
 		self.reset_wiki()
 		self.wiki.parse_text(text)
 		write("};\n")

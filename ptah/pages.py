@@ -22,13 +22,15 @@ class CenterPage(ptah.Page):
 	NAME = "center"
 	PROPS = props.make(ptah.PAGE_PROPS + [
 		TEXT_PROP,
-		ptah.TEXT_ALIGN_PROP
+		ptah.TEXT_ALIGN_PROP,
+		ptah.TEXT_POS_PROP
 	])
 
 	def __init__(self):
 		ptah.Page.__init__(self)
 		self.text = None
 		self.text_align = ptah.TEXT_ALIGN_CENTER
+		self.text_pos = ptah.ALIGN_CENTER
 
 	def get_props(self):
 		return CenterPage.PROPS
