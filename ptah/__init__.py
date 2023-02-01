@@ -96,22 +96,6 @@ class Page(util.AttrMap, props.Container):
 			self.horizontal_shift = [None] * n
 			self.vertical_shift = [None] * n
 
-	def get_style(self, i = -1):
-		if i == -1:
-			return Style(
-				mode = self.mode,
-				scale = self.scale,
-				align = self.align,
-				xshift = self.horizontal_shift,
-				yshift = self.vertical_shift)
-		else:
-			return Style(
-				mode = self.mode[i],
-				scale = self.scale[i],
-				align = self.align[i],
-				xshift = self.horizontal_shift[i],
-				yshift = self.vertical_shift[i])
-
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
 		Raise CheckError if there is an error."""

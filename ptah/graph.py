@@ -86,17 +86,19 @@ class Box:
 
 class Style:
 
-	def __init__(self, mode,
-		scale = None,
-		align = 0,
-		xshift = None,
-		yshift = None
-	):
-		self.mode = mode
-		self.scale = scale
-		self.align = align
-		self.xshift = xshift
-		self.yshift = yshift
+	def __init__(self, obj, i = None):
+		if i == None:
+			self.mode = obj.mode
+			self.scale = obj.scale
+			self.align = obj.align
+			self.xshift = obj.horizontal_shift
+			self.yshift = obj.vertical_shift
+		else:
+			self.mode = obj.mode[i]
+			self.scale = obj.scale[i]
+			self.align = obj.align[i]
+			self.xshift = obj.horizontal_shift[i]
+			self.yshift = obj.vertical_shift[i]
 
 
 class TextStyle:

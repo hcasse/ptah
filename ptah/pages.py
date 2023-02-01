@@ -43,7 +43,7 @@ class CenterPage(ptah.Page):
 		drawer.draw_image(
 			self.image,
 			Box(0, 0, drawer.width, h),
-			self.get_style()
+			Style(self)
 		)
 		if self.text != None:
 			drawer.draw_text(
@@ -89,12 +89,12 @@ class DuoPage(ptah.Page):
 		drawer.draw_image(
 			self.image[0],
 			Box(x1, y1, w, h),
-			self.get_style(0)
+			Style(self, 0)
 		)
 		drawer.draw_image(
 			self.image[1],
 			Box(x2, y2, w, h),
-			self.get_style(1)
+			Style(self, 1)
 		)
 
 	def gen_miniature(drawer):

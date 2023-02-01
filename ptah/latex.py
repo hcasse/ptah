@@ -277,7 +277,6 @@ class Drawer(graph.Drawer, wiki.Handler):
 				% (box.w, box.h, x, y)) 
 		write("\\node[")
 		write("text width=%smm, " % box.w)
-		#write("minimum height=%smm, " % box.h)
 		write("align=%s, %s] at(%smm, %smm) {"
 			% (TEXT_ALIGN[style.text_align], anc, x + dx, y + dy))
 		self.reset_wiki()
