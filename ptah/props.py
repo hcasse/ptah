@@ -10,16 +10,17 @@ from ptah import graph
 class Property:
 	"""Property to describe a page or an album."""
 
-	def __init__(self, id, desc, mode = 0):
+	def __init__(self, id, desc, fun, mode = 0):
 		self.id = id
 		self.pid = id.replace("-", "_")
 		self.desc = desc
 		self.mode = mode
+		self.fun = fun
 
-	def parse(self, text, obj):
+	def parse(self, val, obj):
 		"""Parse the given text and return the corresponding text.
 		Raises CheckError if the text is not valid."""
-		return text
+		return self.fun(self, val, obj)
 
 	def set(self, val, obj):
 		"""Parse the file value and set it, if valid, to the object
@@ -92,59 +93,12 @@ class Property:
 		return self.desc
 
 
-class ImageProperty(Property):
-	"""Property to pass an image."""
-
-	def __init__(self, id, desc, mode = 1):
-		Property.__init__(self, id, desc, mode)
-
-	def parse(self, path, page):
-		if not os.path.exists(os.path.join(page.album.get_base(), path)):
-			raise CheckError("no image on path '%s' for %s" %
-				(path, page.name))
-		return path
-
-
-class EnumProperty(Property):
-	"""A value from an enumeration."""
-
-	def __init__(self, id, desc, vals, mode = 0):
-		Property.__init__(self, id, desc, mode)
-		self.vals = vals
-
-	def parse(self, val, obj):
-		val = val.lower()
-		for i in range(0, len(self.vals)):
-			if val == self.vals[i]:
-				return i
-		raise CheckError("in %s, %s must be one of %s" %
-			(obj.name, id, ", ".join(self.vals)))
-
-	def get_description(self):
-		return "one of " + ", ".join(self.vals) + ": " + \
-			Property.get_description(self)
-
-
-class StringProperty(Property):
-	"""Simple string property."""
-
-	def __init__(self, id, desc, mode = 0):
-		Property.__init__(self, id, desc, mode)
-
-
-class FloatProperty(Property):
-	"""Property supporting a float number."""
-
-	def __init__(self, id, desc, mode = 0):
-		Property.__init__(self, id, desc, mode)
-
-	def parse(self, val, obj):
-		try:
-			return float(val)
-		except ValueError:
-			raise CheckError("value %s of %s should be a floatting-pointer number"
-				% (self.id, obj.name))
-
+def type_float(self, val, obj):
+	try:
+		return float(val)
+	except ValueError:
+		raise CheckError("value %s of %s should be a floatting-pointer number"
+			% (self.id, obj.name))
 
 HTML_COLORS = {
 	"lightsalmon": "#FFA07A",
@@ -288,74 +242,100 @@ HTML_COLORS = {
 	"maroon": "#800000",
 }
 
-class ColorProperty(Property):
+LENGTH_RE = re.compile("([+-]?[0-9\.]?)([a-zA-Z]+)")
 
-	def __init__(self, id, desc, mode = 0):
-		Property.__init__(self, id, desc, mode)
+LENGTH_UNITS = {
+	"mm": 1,
+	"cm": 10,
+	"dm": 100,
+	"in": 25.4,
+	"pt": 0.3514598
+}
 
-	def parse(self, col, obj):
-		col = col.strip().lower()
-		if col.startswith('#'):
-			if len(col) == 7:
-				try:
-					int(col[1:], 16)
-					return col
-				except ValueError:
-					pass
-		else:
+def type_string(self, val, obj):
+	return val
+
+def type_image(self, path, page):
+	if not os.path.exists(os.path.join(page.album.get_base(), path)):
+		raise CheckError("no image on path '%s' for %s" %
+			(path, page.name))
+	return path
+
+def type_enum(vals):
+	def fun(self, val, obj):
+		val = val.lower()
+		for i in range(0, len(vals)):
+				if val == vals[i]:
+					return i
+		raise CheckError("in %s, %s must be one of %s" %
+			(obj.name, id, ", ".join(vals)))
+	return fun
+
+def type_color(self, col, obj):
+	col = col.strip().lower()
+	if col.startswith('#'):
+		if len(col) == 7:
 			try:
-				return HTML_COLORS[col]
-			except KeyError:
+				int(col[1:], 16)
+				return col
+			except ValueError:
 				pass
-		raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
-
-	def get_description(self):
-		return "named color or HTML color \\#RRGGBB."
-
-
-class LengthProperty(Property):
-
-	RE = re.compile("([+-]?[0-9\.]?)([a-zA-Z]+)")
-
-	UNITS = {
-		"mm": 1,
-		"cm": 10,
-		"dm": 100,
-		"in": 25.4,
-		"pt": 0.3514598
-	}
-
-	def __init__(self, id, desc, mode = 0):
-		Property.__init__(self, id, desc, mode)
-
-	def parse(self, val, obj):
+	else:
 		try:
-			if val.endswith("%"):
-				return graph.PropLength(float(val[:-1]) / 100.)
-			elif isinstance(val, (int, float)):
-				return graph.AbsLength(val)
-			else: 
-				m = LengthProperty.RE.match(val)
-				if m != None:
-					return graph.AbsLength(
-						float(m.group(1)),
-						LengthProperty.UNITS[m.group(2)])
-		except (ValueError, KeyError):
+			return HTML_COLORS[col]
+		except KeyError:
 			pass
-		raise CheckError("bad length for %s in %s" % (self.id, obj.name))
+	raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
+
+def type_length(self, val, obj):
+	try:
+		if isinstance(val, (int, float)):
+			return graph.AbsLength(val)
+		elif val.endswith("%"):
+			return graph.PropLength(float(val[:-1]) / 100.)
+		else: 
+			m = LENGTH_RE.match(val)
+			if m != None:
+				return graph.AbsLength(
+					float(m.group(1)),
+					LENGTH_UNITS[m.group(2)])
+	except (ValueError, KeyError):
+		pass
+	raise CheckError("bad length for %s in %s" % (self.id, obj.name))
+
+def type_bool(self, val, obj):
+	if val == False or val == True:
+		return val
+	else:
+		raise CheckError("bad boolean value for %s in %s."
+			% (self.id, obj.name))
+
+def type_union(types):
+	def fun(self, val, obj):
+		for type in types:
+			try:
+				return type(self, val, obj)
+			except CheckError:
+				continue
+		raise CheckError("cannot parse %s in %s" % (self.id, obj.name))
+	return fun
 
 
-class BoolProperty(Property):
-
-	def __init__(self, id, desc, mode = 0):
-		Property.__init__(self, id, desc, mode)
-
-	def parse(self, val, obj):
-		if val == False or val == True:
-			return val
-		else:
-			raise CheckError("bad boolean value for %s in %s."
-				% (self.id, obj.name))
+# For compatibility
+def ImageProperty(id, desc, mode = 1):
+	return Property(id, desc, type_image, mode)
+def EnumProperty(id, desc, vals, mode = 0):
+	return Property(id, desc, type_enum(vals), mode)
+def StringProperty(id, desc, mode = 0):
+	return Property(id, desc, type_string, mode)
+def FloatProperty(id, desc, mode = 0):
+	return Property(id, desc, type_float, mode)
+def ColorProperty(id, desc, mode = 0):
+	return Property(id, desc, type_color, mode)
+def LengthProperty(id, desc, mode = 0):
+	return Property(id, desc, type_length, mode)
+def BoolProperty(id, desc, mode = 0):
+	return Property(id, desc, type_bool, mode)
 
 	
 class Container:

@@ -124,53 +124,43 @@ class Page(util.AttrMap, props.Container):
 			drawer.declare_color(self.background_color)
 
 
-class PagesProp(props.Property):
+def type_pages(self, pages, album):
+	if not hasattr(pages, "__iter__"):
+		raise CheckError("pages should a be a list of pages!")
+	res = []
+	for desc in pages:
 
-	def __init__(self):
-		props.Property.__init__(self, "pages", "list of pages", mode = PROP_REQ)
-
-	def parse(self, pages, album):
-		if not hasattr(pages, "__iter__"):
-			raise CheckError("pages should a be a list of pages!")
-		res = []
-		for desc in pages:
-
-			# get the page type
-			try:
-				type = desc["type"]
-			except KeyError as e:
-				type = "center"
-
-			# make the page
-			try:
-				page = PAGE_MAP[type]()
-			except KeyError:
-				raise CheckError("page type %s is unknown!" % type)
-
-			# initialize the page
-			page.album = album
-			page.set_parent(album)
-			page.number = len(res)
-			res.append(page)
-			util.parse_dict(desc, page, page.get_props())
-		return res
-
-
-class FormatProp(props.Property):
-
-	def __init__(self):
-		props.Property.__init__(self, "format", "page format", mode = PROP_REQ)
-
-	def parse(self, fmt, album):
+		# get the page type
 		try:
-			return format.FORMATS[fmt.upper()]
+			type = desc["type"]
+		except KeyError as e:
+			type = "center"
+
+		# make the page
+		try:
+			page = PAGE_MAP[type]()
 		except KeyError:
-			raise util.CheckError(self, "format %s is unknown" % fmt)
+			raise CheckError("page type %s is unknown!" % type)
+
+		# initialize the page
+		page.album = album
+		page.set_parent(album)
+		page.number = len(res)
+		res.append(page)
+		util.parse_dict(desc, page, page.get_props())
+	return res
+
+
+def type_format(self, fmt, album):
+	try:
+		return format.FORMATS[fmt.upper()]
+	except KeyError:
+		raise util.CheckError(self, "format %s is unknown" % fmt)
 
 
 ALBUM_PROPS = props.make([
-	FormatProp(),
-	PagesProp(),
+	props.Property("format", "page format", type_format),
+	props.Property("pages", "list of pages", type_pages, mode = PROP_REQ),
 	props.StringProperty("title", "Album title."),
 	props.StringProperty("author", "Author name."),
 	props.StringProperty("date", "Edition date."),
