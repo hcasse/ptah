@@ -53,6 +53,7 @@ class Property:
 		while(p != None):
 			if p.__dict__[self.pid] != None:
 				return p.__dict__[self.pid]
+			p = p.parent
 		return None
 
 	def check(self, obj):
@@ -348,9 +349,18 @@ class Container:
 		self.parent = parent
 
 
-def make(props):
+def make(*props):
 	"""Build a property map."""
-	return { prop.id: prop for prop in props }
+	map = {}
+	for prop in props:
+		if isinstance(prop, dict):
+			map.update(prop)
+		elif isinstance(prop, list):
+			for p in prop:
+				map[p.id] = p
+		else:
+			map[prop.id] = prop
+	return map
 
 """Known pages."""
 PAGE_MAP = {

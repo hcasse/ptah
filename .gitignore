@@ -1,10 +1,6 @@
 **/__pycache__
 test/*.aux
 test/*.log
-test/test.pdf
-test/test.tex
+test/*.pdf
+test/*.tex
 tmp/
-test/ptah.tex
-test/ptah.pdf
-test/image.pdf
-test/image.tex

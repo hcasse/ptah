@@ -52,7 +52,27 @@ ALIGN = [
 	lambda w, h: ("anchor = north west", -w/2, h/2)
 ]
 
-TEXT_ALIGN = [ "center", "left", "right" ]
+TEXT_ALIGN = [
+	"center",
+	"center",
+	"right",
+	"right",
+	"right",
+	"center",
+	"left",
+	"left",
+	"left"
+]
+
+FONT_SIZES = [
+	"\\tiny",
+	"\\footnotesize",
+	"\\small",
+	"",
+	"\\large",
+	"\\Large",
+	"\\huge"
+]
 
 PROLOG = \
 """
@@ -271,14 +291,20 @@ class Drawer(graph.Drawer, wiki.Handler):
 	def draw_text(self, text, box, style):
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
-		anc, dx, dy = ALIGN[style.text_pos](box.w, box.h)
+		anc, dx, dy = ALIGN[style.text_align](box.w, box.h)
+		align = TEXT_ALIGN[style.text_align]
 		if DEBUG:
 			write("\\node[minimum width=%smm, minimum height=%smm, draw] at(%smm, %smm) {};\n"
 				% (box.w, box.h, x, y)) 
 		write("\\node[")
 		write("text width=%smm, " % box.w)
-		write("align=%s, %s] at(%smm, %smm) {"
-			% (TEXT_ALIGN[style.text_align], anc, x + dx, y + dy))
+		font_size = FONT_SIZES[style.font_size]
+		if font_size != "":
+			write("font=%s, " % font_size)
+		if DEBUG:
+			write("draw, ")
+		write("align=%s, %s, inner sep=0] at(%smm, %smm) {"
+			% (align, anc, x + dx, y + dy))
 		self.reset_wiki()
 		self.wiki.parse_text(text)
 		write("};\n")
@@ -354,9 +380,9 @@ class DocDrawer(Drawer):
 		for col in ptah.props.HTML_COLORS.values():
 			self.declare_color(col)
 		self.use_package("listings")
-		self.title = "Ptah Documentation"
-		self.author = "H. Cassé $<$hug.casse@gmail.com$>$"
-		self.date = "\\today"
+		self.album.title = "Ptah Documentation"
+		self.album.author = "H. Cassé $<$hug.casse@gmail.com$>$"
+		self.album.date = "\\today"
 		self.doctype = "article"
 
 		self.mini = ptah.Album("mini")

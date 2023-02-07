@@ -106,12 +106,10 @@ class TextStyle:
 	def __init__(self, obj, i = None):
 		if i == None:
 			self.text_align = obj.text_align
+			self.font_size = obj.font_size
 		else:
 			self.text_align = obj.text_align[i]
-		if i == None:
-			self.text_pos = obj.text_pos
-		else:
-			self.text_pos = obj.text_pos[i]
+			self.font_size = obj.font_size[i]
 
 
 class Drawer:

@@ -2,36 +2,36 @@
 
 import os
 import ptah
+from ptah import Page
+from ptah import graph
 from ptah import util
 from ptah import props
 from ptah.graph import *
 
 PROP_ORIENTATION = props.EnumProperty(
 	"orientation", "orientation", ["vertical", "horizontal"])
-TEXT_PROP = props.StringProperty("text", "Page text.")
 MINIATURE_BACK = "yellow!50!white"
-
 
 
 def add(props, prop):
 	props[prop.id] = prop
 
+
 # Center page
-class CenterPage(ptah.Page):
+class CenterPage(Page):
 
 	NAME = "center"
-	PROPS = props.make(ptah.PAGE_PROPS + [
-		TEXT_PROP,
-		ptah.TEXT_ALIGN_PROP,
-		ptah.TEXT_POS_PROP,
+	PROPS = props.make(
+		Page.PROPS,
+		Page.TEXT_PROPS,
+		Page.IMAGE_PROPS,
 		props.BoolProperty("inside", "insert text inside image.")
-	])
+	)
 
 	def __init__(self):
-		ptah.Page.__init__(self)
-		self.text = None
-		self.text_align = ptah.TEXT_ALIGN_CENTER
-		self.text_pos = ptah.ALIGN_CENTER
+		Page.__init__(self)
+		self.init_image()
+		self.init_text()
 		self.inside = False
 
 	def get_props(self):
@@ -61,13 +61,18 @@ class CenterPage(ptah.Page):
 
 
 # Duo page
-class DuoPage(ptah.Page):
+class DuoPage(Page):
 
 	NAME = "duo"
-	PROPS = props.make(ptah.PAGE_PROPS + [PROP_ORIENTATION])
+	PROPS = props.make(
+		Page.PROPS,
+		Page.IMAGE_PROPS,
+		PROP_ORIENTATION
+	)
 
 	def __init__(self):
-		ptah.Page.__init__(self, 2)
+		Page.__init__(self)
+		self.init_image(2)
 		self.orientation = 0
 
 	def get_props(self):
@@ -105,8 +110,40 @@ class DuoPage(ptah.Page):
 		drawer.draw_miniature_image("image1", Box(0, h+2, drawer.width, h))
 
 
+# Text page
+class OnlyTextPage(Page):
+
+	NAME = "only-text"
+	PROPS = props.make(
+		Page.PROPS,
+		Page.TEXT_PROPS
+	)
+
+	def __init__(self):
+		Page.__init__(self)
+		self.init_text()
+		self.pad = graph.AbsLength(10)
+
+	def get_props(self):
+		return OnlyTextPage.PROPS
+
+	def gen(self, drawer):
+		pad = self.pad.get(min(drawer.width, drawer.height))
+		drawer.draw_text(
+			self.text,
+			Box(pad, pad, drawer.width - 2*pad, drawer.height - 2*pad),
+			TextStyle(self)
+		)
+
+	def gen_miniature(drawer):
+		drawer.draw_miniature_text("text",
+			Box(1, 1, drawer.width - 2, drawer.height - 2)
+		)
+		
+
 # Page initialization
 def add(cls):
 	ptah.PAGE_MAP[cls.NAME] = cls
 add(CenterPage)
 add(DuoPage)
+add(OnlyTextPage)

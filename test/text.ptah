@@ -1,0 +1,17 @@
+title: Text Tests
+author: H. Cassé
+date: 24/01/2023
+pages:
+
+  - name: first
+    type: only-text
+    font-size: x-large
+    text-pos: bottom-right
+    text: |
+      This is a simple.
+
+      Made of several lines.
+
+      One line.
+
+      Another line and another and another and another.

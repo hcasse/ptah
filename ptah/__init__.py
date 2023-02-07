@@ -7,6 +7,8 @@ from ptah import props
 from ptah import util
 from ptah.graph import Style
 
+# property management
+
 PROP_OK = 0
 PROP_REQ = 1
 PROP_INH = 2
@@ -25,9 +27,15 @@ ALIGN_BOTTOM_LEFT = 6
 ALIGN_LEFT = 7
 ALIGN_TOP_LEFT = 8
 
-TEXT_ALIGN_CENTER = 0
-TEXT_ALIGN_LEFT = 1
-TEXT_ALIGN_RIGHT = 2
+FONT_SIZE_XX_SMALL = 0
+FONT_SIZE_X_SMALL = 1
+FONT_SIZE_SMALL = 2
+FONT_SIZE_MEDIUM = 3
+FONT_SIZE_LARGE = 4
+FONT_SIZE_X_LARGE = 5
+FONT_SIZE_XX_LARGE = 6
+FONT_SIZE_SMALLER = 7
+FONT_SIZE_LARGER = 8
 
 ALIGNMENTS = [
 	"center",
@@ -53,34 +61,52 @@ HORIZONTAL_SHIFT_PROP = props.LengthProperty("horizontal-shift",
 	"shift in % of the image width")
 VERTICAL_SHIFT_PROP = props.LengthProperty("vertical-shift",
 	"shift in % of the image height")
-TEXT_ALIGN_PROP = props.EnumProperty("text-align", "text alignment.",
-	["center", "left", "right"])
-TEXT_POS_PROP = props.EnumProperty("text-pos", "position of text.", ALIGNMENTS)
-
-PAGE_PROPS = [
-	BACKGROUND_COLOR_PROP,
-	MODE_PROP,
-	IMAGE_PROP,
-	NAME_PROP,
-	SCALE_PROP,
-	ALIGN_PROP,
-	HORIZONTAL_SHIFT_PROP,
-	VERTICAL_SHIFT_PROP
-]
-
+TEXT_ALIGN_PROP = props.EnumProperty("text-align", "Text alignment.", ALIGNMENTS)
+TEXT_PROP = props.StringProperty("text", "Page text.")
+FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_enum([
+	"xx-small", "x-small", "small",
+	"medium",
+	"large", "x-large", "xx-large",
+	"smaller", "larger"
+]))
 
 class Page(util.AttrMap, props.Container):
 	"""A page in the created album."""
 
-	NAME = ""
-	PROPS = {}
+	PAGE_PROPS = [
+		BACKGROUND_COLOR_PROP,
+	]
 
-	def __init__(self, n = 1):
+	IMAGE_PROPS = [
+		MODE_PROP,
+		IMAGE_PROP,
+		NAME_PROP,
+		SCALE_PROP,
+		ALIGN_PROP,
+		HORIZONTAL_SHIFT_PROP,
+		VERTICAL_SHIFT_PROP
+	]
+
+	TEXT_PROPS = [
+		TEXT_PROP,
+		TEXT_ALIGN_PROP,
+		FONT_SIZE_PROP
+	]
+
+	NAME = ""
+	PROPS = props.make(PAGE_PROPS)
+
+	def __init__(self):
 		util.AttrMap.__init__(self)
 		props.Container.__init__(self)
 		self.number = None
-		self.background_color = None
 		self.name = ""
+		self.init_page()
+
+	def init_page(self):
+		self.background_color = None
+
+	def init_image(self, n = 1):
 		if n == 1:
 			self.image = None
 			self.mode = MODE_FIT
@@ -95,6 +121,11 @@ class Page(util.AttrMap, props.Container):
 			self.align = [ALIGN_CENTER] * n
 			self.horizontal_shift = [None] * n
 			self.vertical_shift = [None] * n
+	
+	def init_text(self):
+		self.text = None
+		self.text_align = ALIGN_CENTER
+		self.font_size = FONT_SIZE_MEDIUM
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
@@ -167,11 +198,12 @@ ALBUM_PROPS = props.make([
 	BACKGROUND_COLOR_PROP
 ])
 
-class Album(util.AttrMap):
+class Album(util.AttrMap, props.Container):
 	"""The album itself, mainly an ordered collection of pages."""
 
 	def __init__(self, path):
 		util.AttrMap.__init__(self)
+		props.Container.__init__(self)
 		self.name = "album"
 		self.path = path
 		self.pages = None
