@@ -69,9 +69,9 @@ FONT_SIZES = [
 	"\\footnotesize",
 	"\\small",
 	"",
-	"\\large",
 	"\\Large",
-	"\\huge"
+	"\\LARGE",
+	"\\HUGE"
 ]
 
 PROLOG = \
@@ -92,7 +92,8 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"graphicx",
 			"layout",
 			"tikz",
-			"xcolor"
+			"xcolor",
+			"moresize"
 		]
 		self.tikz_packages = {
 			"patterns",

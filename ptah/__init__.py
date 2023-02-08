@@ -122,10 +122,16 @@ class Page(util.AttrMap, props.Container):
 			self.horizontal_shift = [None] * n
 			self.vertical_shift = [None] * n
 	
-	def init_text(self):
-		self.text = None
-		self.text_align = ALIGN_CENTER
-		self.font_size = FONT_SIZE_MEDIUM
+	def init_text(self, n  = 1):
+		if n == 1:
+			self.text = None
+			self.text_align = ALIGN_CENTER
+			self.font_size = FONT_SIZE_MEDIUM
+		else:
+			self.text = [None] * n
+			self.text_align =  [ALIGN_CENTER] * n
+			self.font_size =  [FONT_SIZE_MEDIUM] * n
+			
 
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.

@@ -5,6 +5,12 @@ format: a4
 background-color: ivory
 pages:
 
+  - name: title
+    type: title
+
+  - name: next
+    type: blank
+
   - name: first
     type: center
     image: photos/reed.jpeg
