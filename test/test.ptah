@@ -14,6 +14,7 @@ pages:
   - name: first
     type: center
     image: photos/reed.jpeg
+    background-image: images/back1.png
 
   - name: second
     type: center

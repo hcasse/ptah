@@ -22,7 +22,7 @@ class CenterPage(Page):
 
 	NAME = "center"
 	PROPS = props.make(
-		Page.PROPS,
+		Page.PAGE_PROPS,
 		Page.TEXT_PROPS,
 		Page.IMAGE_PROPS,
 		props.BoolProperty("inside", "insert text inside image.")
@@ -65,7 +65,7 @@ class DuoPage(Page):
 
 	NAME = "duo"
 	PROPS = props.make(
-		Page.PROPS,
+		Page.PAGE_PROPS,
 		Page.IMAGE_PROPS,
 		PROP_ORIENTATION
 	)
@@ -115,7 +115,7 @@ class OnlyTextPage(Page):
 
 	NAME = "only-text"
 	PROPS = props.make(
-		Page.PROPS,
+		Page.PAGE_PROPS,
 		Page.TEXT_PROPS
 	)
 
@@ -145,7 +145,7 @@ class OnlyTextPage(Page):
 class BlankPage(Page):
 	
 	NAME = "blank"
-	PROPS = props.make(Page.PROPS)
+	PROPS = props.make(Page.PAGE_PROPS)
 	
 	def __init__(self):
 		Page.__init__(self)
@@ -164,7 +164,7 @@ class BlankPage(Page):
 class TitlePage(Page):
 
 	NAME = "title"
-	PROPS = props.make(Page.PROPS, Page.TEXT_PROPS)
+	PROPS = props.make(Page.PAGE_PROPS, Page.TEXT_PROPS)
 
 	def __init__(self):
 		Page.__init__(self)
@@ -182,6 +182,7 @@ class TitlePage(Page):
 		self.interspace = 5
 
 	def get_props(self):
+		#print("DEBUG:", TitlePage.PROPS)
 		return TitlePage.PROPS
 
 	def gen(self, drawer):

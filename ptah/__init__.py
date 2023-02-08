@@ -51,6 +51,10 @@ ALIGNMENTS = [
 
 BACKGROUND_COLOR_PROP = props.ColorProperty(
 	"background-color", "Color for background.", mode = PROP_INH)
+BACKGROUND_IMAGE_PROP = props.ImageProperty(
+	"background-image", "background image", mode = PROP_INH)
+BACKGROUND_MODE_PROP = props.EnumProperty("background-mode",
+	"Background image mode.", [ "fit", "stretch", "fill" ])
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill" ])
 ALIGN_PROP = props.EnumProperty("align", "image alignment", ALIGNMENTS)
@@ -74,13 +78,15 @@ class Page(util.AttrMap, props.Container):
 	"""A page in the created album."""
 
 	PAGE_PROPS = [
+		NAME_PROP,
 		BACKGROUND_COLOR_PROP,
+		BACKGROUND_IMAGE_PROP,
+		BACKGROUND_MODE_PROP
 	]
 
 	IMAGE_PROPS = [
 		MODE_PROP,
 		IMAGE_PROP,
-		NAME_PROP,
 		SCALE_PROP,
 		ALIGN_PROP,
 		HORIZONTAL_SHIFT_PROP,
@@ -105,6 +111,8 @@ class Page(util.AttrMap, props.Container):
 
 	def init_page(self):
 		self.background_color = None
+		self.background_image = None
+		self.background_mode = MODE_STRETCH
 
 	def init_image(self, n = 1):
 		if n == 1:
@@ -185,6 +193,7 @@ def type_pages(self, pages, album):
 		page.number = len(res)
 		res.append(page)
 		util.parse_dict(desc, page, page.get_props())
+
 	return res
 
 
@@ -201,7 +210,8 @@ ALBUM_PROPS = props.make([
 	props.StringProperty("title", "Album title."),
 	props.StringProperty("author", "Author name."),
 	props.StringProperty("date", "Edition date."),
-	BACKGROUND_COLOR_PROP
+	BACKGROUND_COLOR_PROP,
+	BACKGROUND_IMAGE_PROP
 ])
 
 class Album(util.AttrMap, props.Container):
@@ -219,6 +229,7 @@ class Album(util.AttrMap, props.Container):
 		self.author = None
 		self.date = None
 		self.background_color = None
+		self.background_image = None
 
 	def get_base(self):
 		return self.base

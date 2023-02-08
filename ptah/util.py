@@ -58,11 +58,11 @@ def parse_dict(data, base, props):
 				id = key[:p]
 				i = int(key[p+1:]) - 1
 				props[id].set_indexed(i, val, base)
-		except ValueError:
+		except ValueError as e:
 			raise CheckError("bad index %s" % key)
 		except KeyError:
 			base.set_attr(key, data[key])
 
 	# check the properties
-	for prop in props:
-		props[prop].check(base)
+	for prop in props.values():
+		prop.check(base)

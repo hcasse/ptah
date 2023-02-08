@@ -183,11 +183,15 @@ class Drawer(graph.Drawer, wiki.Handler):
 			else:
 				write("\\newpage\n")
 
-			# set background
+			# set background color
 			bg = page.background_color
 			if bg == None:
 				bg = "#FFFFFF"
 			write("\\pagecolor{%s}\n" % self.get_color(bg))
+			
+			# set background image
+			if page.background_image != None:
+				self.gen_background_image(page)
 
 			# generate the content
 			write(
@@ -229,6 +233,35 @@ class Drawer(graph.Drawer, wiki.Handler):
 	def get_size(self, path):
 		i = Image.open(path)
 		return i.size
+
+	def gen_background_image(self, page):
+		write = self.out.write
+		write("\\tikz[remember picture, overlay] ")
+
+		if page.background_mode == ptah.MODE_FIT:
+			# TODO: ALIGN
+			write("\\node[inner sep=0] at(current page.center) {")
+			write("\\includegraphics[width=\\paperwidth, height=\\paperheight]{%s}"
+				% page.background_image)
+			
+		elif page.background_mode == ptah.MODE_STRETCH:
+			write("\\node[inner sep=0] at(current page.center) {")
+			write("\\resizebox{\\paperwidth}{\\paperheight}{\\includegraphics{%s}}"
+				% page.background_image);
+			
+		elif page.background_mode == ptha.MODE_FILL:
+			w, h = self.get_size(path)
+			# TODO manage align, scale, xshift, yshift
+			if w/h < W/H:
+				param = "width=\\paperwidth"	# % page.format.width
+			else:
+				param = "height=\\paperheight" 	# % page.format.height
+			write("\\node at(current page.center) {")
+			write("\\includegraphics[%s, keepaspectratio]{%s}"
+				% (param, path));
+
+		write("};\n")
+
 
 	def draw_image(self, path, box, style):
 		write = self.out.write
