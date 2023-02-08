@@ -439,6 +439,7 @@ class DocDrawer(Drawer):
 		# generate pages
 		write("\\section{Page types}\n")
 		for page in ptah.PAGE_MAP.values():
+			inst = page()
 
 			# dump miniature
 			write("\\noindent\\begin{minipage}{.3\\textwidth}\n")
@@ -455,7 +456,11 @@ class DocDrawer(Drawer):
 			write("\\begin{description}\n")
 			write("\\setlength\\itemsep{-1mm}\n")
 			for prop in page.PROPS.values():
-				write("\\item[%s]" % prop.id)
+				if isinstance(inst.__dict__[prop.pid], (list)):
+					n = True
+				else:
+					n = False
+				write("\\item[%s%s]" % (prop.id, "\\#i" if n else ""))
 				self.write_text(prop.get_description())
 				write("\n")
 			write("\\end{description}\n")
