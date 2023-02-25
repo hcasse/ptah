@@ -45,11 +45,17 @@ def main(mon = io.DEF):
 	parser.add_argument('albums', nargs="*", help="Album to generate.")
 	parser.add_argument("--doc", action="store_true",
 		help="Generate the documentation.")
+	parser.add_argument("--debug", action="store_true",
+		help="Generate the documentation.")
 	
 	args = parser.parse_args()
 	albums = args.albums
 	if albums == None:
 		albums = "album.ptah"
+
+	# generic options
+	if args.debug:
+		util.DEBUG = True
 
 	# generate the documentation
 	if args.doc:

@@ -8,11 +8,11 @@ import ptah.props
 import subprocess
 import sys
 from ptah import graph
+from ptah import util
 from ptah import wiki
 from PIL import Image
 from ptah.wiki import markdown
 
-DEBUG = False
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
 MINIATURE_BACK = "yellow!50!white"
@@ -157,8 +157,8 @@ class Drawer(graph.Drawer, wiki.Handler):
 		rc = subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
 			shell=True,
-			stdout = sys.stdout if DEBUG else subprocess.DEVNULL,
-			stderr = sys.stderr if DEBUG else subprocess.DEVNULL)
+			stdout = sys.stdout if util.DEBUG else subprocess.DEVNULL,
+			stderr = sys.stderr if util.DEBUG else subprocess.DEVNULL)
 		if False:	#rc.returncode == 0:
 			rc = subprocess.run(
 				"pdflatex %s" % os.path.basename(self.out_path),
@@ -226,14 +226,14 @@ class Drawer(graph.Drawer, wiki.Handler):
 """\\noindent\\begin{tikzpicture}
 \\node[%sminimum width=%smm, minimum height=%smm, anchor=south west] at(%smm, %smm) {};
 """
-			% (	"draw, fill=pink, " if DEBUG else "",
+			% (	"draw, fill=pink, " if util.DEBUG else "",
 				self.page_width, self.page_height-0.2,
 				-self.width/2 -self.lmargin, -self.height/2 -self.bmargin))
-			if DEBUG:
+			if util.DEBUG:
 				write("\\node[draw, minimum width=%smm, minimum height=%smm, fill=yellow] {};" % (self.width, self.height))
 			page.gen(self)
 			#write("""\\end{tikzpicture}}\n\n""")
-			if DEBUG:
+			if util.DEBUG:
 				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
 					% (-self.width/2, self.width))
 				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
@@ -389,7 +389,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		x, y = self.remap(box.centerx(), box.centery())
 		anc, dx, dy = ALIGN[style.text_align](box.w, box.h)
 		align = TEXT_ALIGN[style.text_align]
-		if DEBUG:
+		if util.DEBUG:
 			write("\\node[minimum width=%smm, minimum height=%smm, draw] at(%smm, %smm) {};\n"
 				% (box.w, box.h, x, y)) 
 		write("\\node[")
@@ -397,7 +397,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		font_size = FONT_SIZES[style.font_size]
 		if font_size != "":
 			write("font=%s, " % font_size)
-		if DEBUG:
+		if util.DEBUG:
 			write("draw, ")
 		write("align=%s, %s, inner sep=0] at(%smm, %smm) {"
 			% (align, anc, x + dx, y + dy))

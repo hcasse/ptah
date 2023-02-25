@@ -2,6 +2,8 @@
 
 from string import Template
 
+DEBUG = False
+
 def generate(templ, **args):
 	"""Generate the given template with the passed arguments."""
 	return Template(templ).substitute(**args)
