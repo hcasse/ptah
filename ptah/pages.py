@@ -213,11 +213,11 @@ class TitlePage(Page):
 		ha = 5
 		w = drawer.width - 6
 		y = 3
-		drawer.draw_miniature_text("title#1", Box(3, 3, w, ht))
+		drawer.draw_miniature_text("title\\#1", Box(3, 3, w, ht))
 		y += ht + 1
-		drawer.draw_miniature_text("date#2", Box(3, y, w, hd))
+		drawer.draw_miniature_text("date\\#2", Box(3, y, w, hd))
 		y += hd + 1
-		drawer.draw_miniature_text("author#3", Box(3, y, w, ha))
+		drawer.draw_miniature_text("author\\#3", Box(3, y, w, ha))
 		
 
 # Page initialization

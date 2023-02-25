@@ -121,6 +121,8 @@ class Drawer:
 		self.format = album.format
 		self.width = self.format.body_width()
 		self.height = self.format.body_height()
+		self.page_width = self.format.width
+		self.page_height = self.format.height
 		self.sep = self.format.column_sep
 
 	def draw_image(self, path, box, style):

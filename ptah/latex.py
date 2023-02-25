@@ -6,6 +6,7 @@ import ptah
 import ptah.format
 import ptah.props
 import subprocess
+import sys
 from ptah import graph
 from ptah import wiki
 from PIL import Image
@@ -106,6 +107,15 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"latex_escape", ESCAPES, syntax.on_text))
 		self.wiki = wiki.Parser(syntax)
 		self.reset_wiki()
+		#self.offx = album.format.oddside_margin - album.format.evenside_margin
+		#self.offy = album.format.top_margin - album.format.bottom_margin
+		#self.offx = -album.format.oddside_margin - self.width/2
+		#self.offx2 = -album.format.evenside_margin - self.width/2
+		#self.offy = -album.format.bottom_margin - self.height/2
+		self.lmargin = album.format.oddside_margin
+		self.rmargin = album.format.evenside_margin
+		self.bmargin = album.format.bottom_margin
+		self.tmargin = album.format.top_margin
 
 	# wiki.Handler functions
 	def reset_wiki(self):
@@ -144,12 +154,25 @@ class Drawer(graph.Drawer, wiki.Handler):
 		if dir != "":
 			cwd = os.path.abspath(os.getcwd())
 			os.chdir(dir)
-		subprocess.run(
+		rc = subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
 			shell=True,
-			capture_output = not DEBUG)
+			stdout = sys.stdout if DEBUG else subprocess.DEVNULL,
+			stderr = sys.stderr if DEBUG else subprocess.DEVNULL)
+		if False:	#rc.returncode == 0:
+			rc = subprocess.run(
+				"pdflatex %s" % os.path.basename(self.out_path),
+				shell=True,
+				stdout = subprocess.DEVNULL,
+				stderr = subprocess.DEVNULL)
 		if dir != "":
 			os.chdir(cwd)
+
+		#if DEBUG:
+		#	print("DEBUG: offset ", self.offx, self.offy)
+		#	print("DEBUG: margins ", self.format.top_margin, self.format.bottom_margin)
+		#	print("DEBUG: body ", self.width, self.height)
+		#	print("DEBUG: page ", self.format.width, self.format.height)
 
 	def gen_latex(self):
 		"""Called to generate the output file."""
@@ -183,24 +206,50 @@ class Drawer(graph.Drawer, wiki.Handler):
 			else:
 				write("\\newpage\n")
 
-			# set background color
+			# prepare background
 			bg = page.background_color
 			if bg == None:
 				bg = "#FFFFFF"
 			write("\\pagecolor{%s}\n" % self.get_color(bg))
-			
-			# set background image
 			if page.background_image != None:
 				self.gen_background_image(page)
 
 			# generate the content
+#			write(
+#"""\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
+#\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};
+#"""
 			write(
-"""\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
-\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};
+#"""\\noindent\\adjustbox{max width=%smm, max height=%smm}{\\begin{tikzpicture}
+#\\node[%sminimum width=\\paperwidth, minimum height=\\paperheight] at(%smm, %smm) {};
+#"""
+"""\\noindent\\begin{tikzpicture}
+\\node[%sminimum width=%smm, minimum height=%smm, anchor=south west] at(%smm, %smm) {};
 """
-			% ("draw, " if DEBUG else ""))
+			% (	"draw, fill=pink, " if DEBUG else "",
+				self.page_width, self.page_height-0.2,
+				-self.width/2 -self.lmargin, -self.height/2 -self.bmargin))
+			if DEBUG:
+				write("\\node[draw, minimum width=%smm, minimum height=%smm, fill=yellow] {};" % (self.width, self.height))
 			page.gen(self)
-			write("""\\end{tikzpicture}}\n\n""")
+			#write("""\\end{tikzpicture}}\n\n""")
+			if DEBUG:
+				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
+					% (-self.width/2, self.width))
+				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
+					% (-self.width/2-self.lmargin, self.lmargin))
+				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
+					% (self.width/2, self.lmargin))
+				write("\\draw[<->, thick, blue, overlay] (0, %smm) -- ++(0,%smm);\n"
+					% (-self.height/2, self.height))
+				write("\\draw[<->, thick, blue, overlay] (0,%smm) -- ++(0,%smm);\n"
+					% (-self.height/2, -self.bmargin))
+				write("\\draw[<->, thick, blue, overlay] (0,%smm) -- ++(0,%smm);\n"
+					% (self.height/2, self.tmargin))
+			write("""\\end{tikzpicture}\n\n""")
+
+			# even/odd page management
+			self.lmargin, self.rmargin = self.rmargin, self.lmargin	
 
 	def gen_declaration(self):
 		write = self.out.write
@@ -217,26 +266,37 @@ class Drawer(graph.Drawer, wiki.Handler):
 		write("\\date{%s}\n" % self.album.date)
 
 		# write geometry
-		write("\\geometry{\n")
-		write("paperwidth = %smm,\n" % self.format.width)
-		write("paperheight = %smm,\n" % self.format.height)
-		write("top = %smm,\n" % self.format.top_margin)
-		write("bottom = %smm,\n" % self.format.bottom_margin)
-		write("left = %smm,\n" % self.format.oddside_margin)
-		write("right = %smm\n" % self.format.evenside_margin)
-		write("}\n")
+		self.gen_geometry()
 
 		# write colors
 		for (col, name) in self.colors.items():
 			write("\\definecolor{%s}{HTML}{%s}\n" % (name, col[1:]))
 
+	def gen_geometry(self):
+		write = self.out.write
+		write("\\geometry{\n")
+		write("paperwidth = %smm,\n" % self.format.width)
+		write("paperheight = %smm,\n" % self.format.height)
+		write("top = 0mm,\n")
+		write("bottom = 0mm,\n")
+		write("left = 0mm,\n")
+		write("right = 0mm\n")
+		write("}\n")
+		
 	def get_size(self, path):
 		i = Image.open(path)
 		return i.size
 
 	def gen_background_image(self, page):
 		write = self.out.write
-		write("\\tikz[remember picture, overlay] ")
+		bot = self.format.bottom_margin
+		if page.number % 2 == 1:
+			left = self.format.oddside_margin
+		else:
+			left = self.format.evenside_margin
+
+		#write("\\clearpage\n")
+		#write("\\noindent\\tikz[remember picture, overlay] ")
 
 		if page.background_mode == ptah.MODE_FIT:
 			# TODO: ALIGN
@@ -245,9 +305,12 @@ class Drawer(graph.Drawer, wiki.Handler):
 				% page.background_image)
 			
 		elif page.background_mode == ptah.MODE_STRETCH:
-			write("\\node[inner sep=0] at(current page.center) {")
-			write("\\resizebox{\\paperwidth}{\\paperheight}{\\includegraphics{%s}}"
-				% page.background_image);
+			#write("\\noindent\\node[inner sep=0] at(current page.center) {")
+			#write("\\noindent\\node[inner sep=0, anchor=south west] at(%smm, %smm) {" % (-left, -bot))
+			#write("\\noindent\\node[inner sep=0, anchor=south west] at(%smm, %smm) {" % (-self.offx, -self.offy))
+			#write("\\includegraphics[width=\\paperwidth, height=\\paperheight]{%s}"
+			#	% page.background_image);
+			pass
 			
 		elif page.background_mode == ptha.MODE_FILL:
 			w, h = self.get_size(path)
@@ -260,8 +323,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("\\includegraphics[%s, keepaspectratio]{%s}"
 				% (param, path));
 
-		write("};\n")
-
+		#write("};%\n")
 
 	def draw_image(self, path, box, style):
 		write = self.out.write
@@ -431,6 +493,9 @@ class DocDrawer(Drawer):
 		syntax.add_token(wiki.ReplaceToken(
 			"latex_escape", ESCAPES, syntax.on_text))
 		self.wiki = wiki.Parser(syntax)
+
+	def gen_geometry(self):
+		pass
 
 	def write_text(self, text):
 		self.reset_wiki()
