@@ -168,12 +168,6 @@ class Drawer(graph.Drawer, wiki.Handler):
 		if dir != "":
 			os.chdir(cwd)
 
-		#if DEBUG:
-		#	print("DEBUG: offset ", self.offx, self.offy)
-		#	print("DEBUG: margins ", self.format.top_margin, self.format.bottom_margin)
-		#	print("DEBUG: body ", self.width, self.height)
-		#	print("DEBUG: page ", self.format.width, self.format.height)
-
 	def gen_latex(self):
 		"""Called to generate the output file."""
 
@@ -206,33 +200,27 @@ class Drawer(graph.Drawer, wiki.Handler):
 			else:
 				write("\\newpage\n")
 
-			# prepare background
+			# background color
 			bg = page.background_color
 			if bg == None:
 				bg = "#FFFFFF"
 			write("\\pagecolor{%s}\n" % self.get_color(bg))
+			
+			# begin tikz
+			write("\\noindent\\begin{tikzpicture}\n")
+			
+			# background image
 			if page.background_image != None:
 				self.gen_background_image(page)
 
 			# generate the content
-#			write(
-#"""\\noindent\\adjustbox{max width=\\textwidth, max height=\\textheight}{\\begin{tikzpicture}
-#\\node[%sminimum width=\\textwidth, minimum height=\\textheight] {};
-#"""
-			write(
-#"""\\noindent\\adjustbox{max width=%smm, max height=%smm}{\\begin{tikzpicture}
-#\\node[%sminimum width=\\paperwidth, minimum height=\\paperheight] at(%smm, %smm) {};
-#"""
-"""\\noindent\\begin{tikzpicture}
-\\node[%sminimum width=%smm, minimum height=%smm, anchor=south west] at(%smm, %smm) {};
-"""
-			% (	"draw, fill=pink, " if util.DEBUG else "",
-				self.page_width, self.page_height-0.2,
-				-self.width/2 -self.lmargin, -self.height/2 -self.bmargin))
+			write("\\node[%sminimum width=%smm, minimum height=%smm, anchor=south west] at(%smm, %smm) {};\n"
+				% (	"draw, fill=pink, " if util.DEBUG else "",
+					self.page_width, self.page_height-0.2,
+					-self.width/2 -self.lmargin, -self.height/2 -self.bmargin))
 			if util.DEBUG:
 				write("\\node[draw, minimum width=%smm, minimum height=%smm, fill=yellow] {};" % (self.width, self.height))
 			page.gen(self)
-			#write("""\\end{tikzpicture}}\n\n""")
 			if util.DEBUG:
 				write("\\draw[<->, thick, blue, overlay] (%smm, 0) -- ++(%smm,0);\n"
 					% (-self.width/2, self.width))
@@ -287,40 +275,40 @@ class Drawer(graph.Drawer, wiki.Handler):
 		i = Image.open(path)
 		return i.size
 
+	def get_page_center(self):
+		return (
+			(-self.lmargin-self.width/2 + self.rmargin+self.width/2)/2,
+			(-self.bmargin-self.height/2 + self.tmargin+self.height/2)/2
+		)
+
 	def gen_background_image(self, page):
 		write = self.out.write
-		bot = self.format.bottom_margin
-		if page.number % 2 == 1:
-			left = self.format.oddside_margin
-		else:
-			left = self.format.evenside_margin
-
-		#write("\\clearpage\n")
-		#write("\\noindent\\tikz[remember picture, overlay] ")
+		path = page.background_image
 
 		if page.background_mode == ptah.MODE_FIT:
-			# TODO: ALIGN
-			write("\\node[inner sep=0] at(current page.center) {")
-			write("\\includegraphics[width=\\paperwidth, height=\\paperheight]{%s}"
-				% page.background_image)
+			cx, cy = self.get_page_center()
+			write("\\node[overlay, inner sep=0] at(%smm, %smm) {"
+				% (cx, cy))
+			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}};"
+				% (self.format.width, self.format.height, path))
 			
 		elif page.background_mode == ptah.MODE_STRETCH:
-			#write("\\noindent\\node[inner sep=0] at(current page.center) {")
-			#write("\\noindent\\node[inner sep=0, anchor=south west] at(%smm, %smm) {" % (-left, -bot))
-			#write("\\noindent\\node[inner sep=0, anchor=south west] at(%smm, %smm) {" % (-self.offx, -self.offy))
-			#write("\\includegraphics[width=\\paperwidth, height=\\paperheight]{%s}"
-			#	% page.background_image);
-			pass
+			write("\\node[overlay, inner sep=0, anchor=north west] at(%smm, %smm) {"
+				% (-self.width/2-self.lmargin, self.height/2+self.tmargin))
+			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}};\n"
+				% (self.format.width, self.format.height, path))
 			
-		elif page.background_mode == ptha.MODE_FILL:
+		elif page.background_mode == ptah.MODE_FILL:
 			w, h = self.get_size(path)
+			W, H = self.format.width, self.format.height
 			# TODO manage align, scale, xshift, yshift
 			if w/h < W/H:
 				param = "width=\\paperwidth"	# % page.format.width
 			else:
 				param = "height=\\paperheight" 	# % page.format.height
-			write("\\node at(current page.center) {")
-			write("\\includegraphics[%s, keepaspectratio]{%s}"
+			cx, cy = self.get_page_center()
+			write("\\node[overlay] at(%smm, %smm) {" % (cx, cy))
+			write("\\includegraphics[%s, keepaspectratio]{%s}};"
 				% (param, path));
 
 		#write("};%\n")
