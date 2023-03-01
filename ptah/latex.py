@@ -94,12 +94,16 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"layout",
 			"tikz",
 			"xcolor",
-			"moresize"
+			"moresize",
+			"tcolorbox"
 		]
 		self.tikz_packages = {
 			"patterns",
 			"patterns.meta",
 			"shapes.geometric"
+		}
+		self.tcb_packages = {
+			"skins"
 		}
 		self.doctype = "book"
 		syntax = markdown.make(self)
@@ -107,11 +111,6 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"latex_escape", ESCAPES, syntax.on_text))
 		self.wiki = wiki.Parser(syntax)
 		self.reset_wiki()
-		#self.offx = album.format.oddside_margin - album.format.evenside_margin
-		#self.offy = album.format.top_margin - album.format.bottom_margin
-		#self.offx = -album.format.oddside_margin - self.width/2
-		#self.offx2 = -album.format.evenside_margin - self.width/2
-		#self.offy = -album.format.bottom_margin - self.height/2
 		self.lmargin = album.format.oddside_margin
 		self.rmargin = album.format.evenside_margin
 		self.bmargin = album.format.bottom_margin
@@ -249,6 +248,8 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("\\usepackage{%s}\n" % pack)
 		for pack in self.tikz_packages:
 			write("\\usetikzlibrary{%s}\n" % pack)
+		for pack in self.tcb_packages:
+			write("\\tcbuselibrary{%s}\n" % pack)
 		write("\\title{%s}\n" % self.album.title)
 		write("\\author{%s}\n" % self.album.author)
 		write("\\date{%s}\n" % self.album.date)
@@ -281,6 +282,12 @@ class Drawer(graph.Drawer, wiki.Handler):
 			(-self.bmargin-self.height/2 + self.tmargin+self.height/2)/2
 		)
 
+	def get_bottom_left(self):
+		return (
+			-self.lmargin-self.width/2,
+			-self.bmargin-self.height/2
+		)
+
 	def gen_background_image(self, page):
 		write = self.out.write
 		path = page.background_image
@@ -303,15 +310,18 @@ class Drawer(graph.Drawer, wiki.Handler):
 			W, H = self.format.width, self.format.height
 			# TODO manage align, scale, xshift, yshift
 			if w/h < W/H:
-				param = "width=\\paperwidth"	# % page.format.width
+				param = "width=\\paperwidth"
 			else:
-				param = "height=\\paperheight" 	# % page.format.height
+				param = "height=\\paperheight"
 			cx, cy = self.get_page_center()
 			write("\\node[overlay] at(%smm, %smm) {" % (cx, cy))
 			write("\\includegraphics[%s, keepaspectratio]{%s}};"
 				% (param, path));
 
-		#write("};%\n")
+		elif page.background_mode == ptah.MODE_TILE:
+			x, y = self.get_bottom_left()
+			write("\path[overlay, fill tile image=%s] (%smm, %smm) rectangle ++(%smm, %smm);\n"
+				% (path, x, y, self.format.width, self.format.height));
 
 	def draw_image(self, path, box, style):
 		write = self.out.write

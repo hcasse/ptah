@@ -1,0 +1,29 @@
+title: Background Test Album
+author: H. Cassé
+date: 9/02/2023
+format: a4
+background-color: ivory
+pages:
+
+  - name: first
+    type: center
+    image: photos/woman.jpg
+    background-image: images/back1.png
+
+  - name: second
+    type: center
+    image: photos/rose.jpg
+    background-image: images/back1.png
+    background-mode: fit
+
+  - name: third
+    type: center
+    image: photos/woman.jpg
+    background-image: images/back1.png
+    background-mode: fill
+
+  - name: fourth
+    type: center
+    image: photos/vulture.jpeg
+    background-image: images/pattern1.jpg
+    background-mode: tile

@@ -16,6 +16,7 @@ PROP_INH = 2
 MODE_FIT = 0
 MODE_STRETCH = 1
 MODE_FILL = 2
+MODE_TILE = 3	# only for background
 
 ALIGN_CENTER = 0
 ALIGN_TOP = 1
@@ -54,7 +55,7 @@ BACKGROUND_COLOR_PROP = props.ColorProperty(
 BACKGROUND_IMAGE_PROP = props.ImageProperty(
 	"background-image", "background image", mode = PROP_INH)
 BACKGROUND_MODE_PROP = props.EnumProperty("background-mode",
-	"Background image mode.", [ "fit", "stretch", "fill" ])
+	"Background image mode.", [ "fit", "stretch", "fill", "tile" ])
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill" ])
 ALIGN_PROP = props.EnumProperty("align", "image alignment", ALIGNMENTS)

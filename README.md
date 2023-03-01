@@ -40,7 +40,7 @@ containing the album file.
 Many thanks to:
 * [PH](https://pxhere.com/)
 * [Unsplash](https://unsplash.com)
-* [FreePic](https://www.freepik.com/free-photos-vectors/decorative-background)
+* [FreePic](https://www.freepik.com)
 
 ## License
 
