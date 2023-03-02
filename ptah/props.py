@@ -7,22 +7,51 @@ import ptah
 from ptah.util import CheckError
 from ptah import graph
 
+def implies_set(prop, val1, val2):
+	"""Implementation of implies (in Property construction) that
+	assign the val2 if the corresponding property has for value1.
+	Useful for default activation of a property."""
+	def doit(obj, index):
+		if prop.get(obj, index) == val1:
+			prop.set(obj, index, val2)
+	return doit
+
 class Property:
 	"""Property to describe a page or an album."""
 
-	def __init__(self, id, desc, fun, mode = 0):
+	def __init__(self,
+			id, desc, fun,
+			mode = 0,
+			implies = lambda obj, index: None
+		):
 		self.id = id
 		self.pid = id.replace("-", "_")
 		self.desc = desc
 		self.mode = mode
 		self.fun = fun
+		self.implies = implies
 
 	def parse(self, val, obj):
 		"""Parse the given text and return the corresponding text.
 		Raises CheckError if the text is not valid."""
 		return self.fun(self, val, obj)
 
-	def set(self, val, obj):
+	def get(self, obj, index = None):
+		""""Get the value corresponding to the property in the given
+		object at the given index (if any)."""
+		if index == None:
+			return obj.__dict__[self.pid]
+		else:
+			return obj.__dict__[self.pid][index]
+
+	def set(self, obj, index, val):
+		"""Set the value (without index test)."""
+		if index == None:
+			obj.__dict__[self.pid]  = val
+		else:
+			obj.__dict__[self.pid][index] = val
+
+	def set_scalar(self, val, obj):
 		"""Parse the file value and set it, if valid, to the object
 		corresponding field. The default implementation performs
 		the assignment to the field without test. May raise
@@ -31,6 +60,7 @@ class Property:
 			raise CheckError("property %s must be indexed #i in %s." %
 				(self.id, obj.name))
 		obj.__dict__[self.pid] = self.parse(val, obj)
+		self.implies(obj, None)
 
 	def is_indexed(self):
 		"""Test if the property supports indexes."""
@@ -47,6 +77,7 @@ class Property:
 			raise CheckError("property %s#%d with bad index in %s." %
 				(self.id, i, obj.name))
 		l[i] = self.parse(val, obj)
+		self.implies(obj, i)
 
 	def lookup_parent(self, p):
 		p = p.parent
@@ -298,8 +329,7 @@ def type_length(self, val, obj):
 			m = LENGTH_RE.match(val)
 			if m != None:
 				return graph.AbsLength(
-					float(m.group(1)),
-					LENGTH_UNITS[m.group(2)])
+					float(m.group(1)) * LENGTH_UNITS[m.group(2)])
 	except (ValueError, KeyError):
 		pass
 	raise CheckError("bad length for %s in %s" % (self.id, obj.name))

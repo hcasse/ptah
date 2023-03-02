@@ -38,6 +38,23 @@ FONT_SIZE_XX_LARGE = 6
 FONT_SIZE_SMALLER = 7
 FONT_SIZE_LARGER = 8
 
+BORDER_THIN = 0
+BORDER_MEDIUM = 1
+BORDER_THICK = 2
+border_width_enum = ["thin", "medium", "thick"]
+border_width_type = props.type_union([
+	props.type_enum(border_width_enum),
+	props.type_length
+])
+
+BORDER_NONE = 0
+BORDER_SOLID = 1
+BORDER_DOTTED = 2
+BORDER_DASHED = 3
+BORDER_DOUBLE = 4
+border_style_enum = ["none", "solid", "dotted", "dashed", "double"]
+border_style_type = props.type_enum(border_style_enum)
+
 ALIGNMENTS = [
 	"center",
 	"top",
@@ -50,12 +67,16 @@ ALIGNMENTS = [
 	"top-left"
 ]
 
+
+# background properties
 BACKGROUND_COLOR_PROP = props.ColorProperty(
 	"background-color", "Color for background.", mode = PROP_INH)
 BACKGROUND_IMAGE_PROP = props.ImageProperty(
 	"background-image", "background image", mode = PROP_INH)
 BACKGROUND_MODE_PROP = props.EnumProperty("background-mode",
 	"Background image mode.", [ "fit", "stretch", "fill", "tile" ])
+
+# image properties
 MODE_PROP = props.EnumProperty("mode", "image mode",
 	[ "fit", "stretch", "fill" ])
 ALIGN_PROP = props.EnumProperty("align", "image alignment", ALIGNMENTS)
@@ -66,6 +87,8 @@ HORIZONTAL_SHIFT_PROP = props.LengthProperty("horizontal-shift",
 	"shift in % of the image width")
 VERTICAL_SHIFT_PROP = props.LengthProperty("vertical-shift",
 	"shift in % of the image height")
+
+# text properties
 TEXT_ALIGN_PROP = props.EnumProperty("text-align", "Text alignment.", ALIGNMENTS)
 TEXT_PROP = props.StringProperty("text", "Page text.")
 FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_enum([
@@ -74,6 +97,26 @@ FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_enum([
 	"large", "x-large", "xx-large",
 	"smaller", "larger"
 ]))
+
+# border properties
+BORDER_STYLE = props.Property(
+	"border-style",
+	"Style for the border.",
+	border_style_type
+)
+BORDER_COLOR = props.Property(
+	"border-color",
+	"Color for border of an image.",
+	props.type_color,
+	mode = PROP_INH,
+	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
+BORDER_WIDTH = props.Property(
+	"border-width",
+	"width of border lines: length or one of " + ", ".join(border_width_enum) + ".",
+	border_width_type,
+	mode = PROP_INH,
+	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
+
 
 class Page(util.AttrMap, props.Container):
 	"""A page in the created album."""
@@ -91,7 +134,10 @@ class Page(util.AttrMap, props.Container):
 		SCALE_PROP,
 		ALIGN_PROP,
 		HORIZONTAL_SHIFT_PROP,
-		VERTICAL_SHIFT_PROP
+		VERTICAL_SHIFT_PROP,
+		BORDER_STYLE,
+		BORDER_WIDTH,
+		BORDER_COLOR
 	]
 
 	TEXT_PROPS = [
@@ -109,13 +155,18 @@ class Page(util.AttrMap, props.Container):
 		self.number = None
 		self.name = ""
 		self.init_page()
+		self.image_count = 0
+		self.text_count = 0
 
 	def init_page(self):
+		"""Initialize the page properties."""
 		self.background_color = None
 		self.background_image = None
 		self.background_mode = MODE_STRETCH
 
 	def init_image(self, n = 1):
+		"""Initialize the image count and their properties."""
+		self.image_count = n
 		if n == 1:
 			self.image = None
 			self.mode = MODE_FIT
@@ -123,6 +174,9 @@ class Page(util.AttrMap, props.Container):
 			self.align = ALIGN_CENTER
 			self.horizontal_shift = None
 			self.vertical_shift = None
+			self.border_style = BORDER_NONE
+			self.border_width = BORDER_MEDIUM
+			self.border_color = "#000000"
 		else:
 			self.image = [None] * n
 			self.mode = [MODE_FIT] * n
@@ -130,8 +184,13 @@ class Page(util.AttrMap, props.Container):
 			self.align = [ALIGN_CENTER] * n
 			self.horizontal_shift = [None] * n
 			self.vertical_shift = [None] * n
+			self.border_style = [BORDER_NONE] * n
+			self.border_width = [BORDER_MEDIUM] * n
+			self.border_color = ["#000000"] * N
 	
 	def init_text(self, n  = 1):
+		"""Initialize the text count and their properties."""
+		self.text_count = 0
 		if n == 1:
 			self.text = None
 			self.text_align = ALIGN_CENTER
@@ -140,8 +199,7 @@ class Page(util.AttrMap, props.Container):
 			self.text = [None] * n
 			self.text_align =  [ALIGN_CENTER] * n
 			self.font_size =  [FONT_SIZE_MEDIUM] * n
-			
-
+		
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
 		Raise CheckError if there is an error."""
@@ -168,6 +226,12 @@ class Page(util.AttrMap, props.Container):
 		"""Called to declare usd resource in the declaration phase."""
 		if self.background_color != None:
 			drawer.declare_color(self.background_color)
+		if self.image_count == 1:
+			drawer.declare_color(self.border_color)
+		elif self.image_count > 1:
+			for c in self.border_color:
+				drawer.declare_color(c)
+
 
 
 def type_pages(self, pages, album):

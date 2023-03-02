@@ -1,0 +1,29 @@
+title: Border Test Album
+author: H. Cassé
+date: 02/03/2023
+format: a4
+background-color: ivory
+pages:
+
+  - name: first
+    type: center
+    image: photos/woman.jpg
+    border-color: tomato
+
+  - name: second
+    type: center
+    image: photos/chem.jpeg
+    image-mode: fill
+    border-color: tomato
+
+  - name: third
+    type: center
+    image: photos/hoang.jpg
+    border-color: tomato
+    border-width: 4mm
+
+  - name: fourth
+    type: center
+    image: photos/ice.jpeg
+    border-width: 1mm
+    border-style: dashed

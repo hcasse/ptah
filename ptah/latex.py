@@ -75,6 +75,14 @@ FONT_SIZES = [
 	"\\HUGE"
 ]
 
+BORDER_STYLES = [
+	"",
+	"",
+	"dotted",
+	"dashed",
+	"double"
+]
+
 PROLOG = \
 """
 \\usepackage[utf8]{inputenc}
@@ -323,24 +331,55 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("\path[overlay, fill tile image=%s] (%smm, %smm) rectangle ++(%smm, %smm);\n"
 				% (path, x, y, self.format.width, self.format.height));
 
+	def border_props(self, style):
+		if style.border_style == ptah.BORDER_NONE:
+			return ""
+		else:
+			props = "draw=%s, inner sep = 0" \
+				% self.get_color(style.border_color)
+			if style.border_width == ptah.BORDER_MEDIUM:
+				props += ", thick"
+			elif style.border_width == ptah.BORDER_THICK:
+				props += ", ultra thick"
+			elif isinstance(style.border_width, graph.Length):
+				props += ",line width=%smm" % style.border_width.get(1.)
+			if style.border_style != ptah.BORDER_SOLID:
+				props += ",%s" % BORDER_STYLES[style.border_style]
+			return props
+	
+	def draw_border(self, x, y, W, H, style):
+		if style.border_style != ptah.BORDER_NONE:
+			self.out.write(
+				"\\draw[%s] (%smm,%smm) rectangle ++(%smm,%smm);\n" %
+				(self.border_props(style), x-W/2, y-H/2, W, H))
+
+	def draw_border_around(self, name, style):
+		if style.border_style != ptah.BORDER_NONE:
+			self.out.write(
+				"\\draw[%s] (%s.north west) rectangle (%s.south east);\n" %
+				(self.border_props(style), name, name))
+
 	def draw_image(self, path, box, style):
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
 		W, H = box.w, box.h
 
+		# draw the image
 		if style.mode == ptah.MODE_FIT:
 			anchor,dx, dy = ALIGN[style.align](W, H)
-			write("\\node[%s] at(%smm, %smm) {"
+			write("\\node[%s,inner sep=0] at(%smm, %smm) (A) {" \
 				% (anchor, x + dx, y + dy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
 				% (box.w, box.h, path));
 			write("};\n")
+			self.draw_border_around("A", style)
 
 		elif style.mode == ptah.MODE_STRETCH:
 			write("\\node at(%smm, %smm) {" % (x, y))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}"
 				% (box.w, box.h, path));
 			write("};\n")
+			self.draw_border(x, y, W, H, style)
 
 		elif style.mode == ptah.MODE_FILL:
 
@@ -374,11 +413,12 @@ class Drawer(graph.Drawer, wiki.Handler):
 				% (param, path));
 			write("};\n")
 			write("\\end{scope}\n")
+			self.draw_border(x, y, W, H, style)
 			
 		else:
 			print("ERROR: unknown mode", style.mode)
 			exit(1)
-			
+		
 	def remap(self, x, y):
 		return (x - self.dx, self.dy - y)
 

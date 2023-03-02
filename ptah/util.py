@@ -55,7 +55,7 @@ def parse_dict(data, base, props):
 		try:
 			p = key.find('#')
 			if p < 0:
-				props[key].set(val, base)
+				props[key].set_scalar(val, base)
 			else:
 				id = key[:p]
 				i = int(key[p+1:]) - 1

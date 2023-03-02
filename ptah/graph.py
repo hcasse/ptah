@@ -93,12 +93,18 @@ class Style:
 			self.align = obj.align
 			self.xshift = obj.horizontal_shift
 			self.yshift = obj.vertical_shift
+			self.border_style = obj.border_style
+			self.border_width = obj.border_width
+			self.border_color = obj.border_color
 		else:
 			self.mode = obj.mode[i]
 			self.scale = obj.scale[i]
 			self.align = obj.align[i]
 			self.xshift = obj.horizontal_shift[i]
 			self.yshift = obj.vertical_shift[i]
+			self.border_style = obj.border_style[i]
+			self.border_width = obj.border_width[i]
+			self.border_color = obj.border_color[i]
 
 
 class TextStyle:
