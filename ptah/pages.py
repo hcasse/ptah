@@ -110,6 +110,51 @@ class DuoPage(Page):
 		drawer.draw_miniature_image("image1", Box(0, h+2, drawer.width, h))
 
 
+# Trio page
+class TrioPage(Page):
+
+	NAME = "trio"
+	PROPS = props.make(
+		Page.PAGE_PROPS,
+		Page.IMAGE_PROPS,
+		PROP_ORIENTATION
+	)
+
+	def __init__(self):
+		Page.__init__(self)
+		self.init_image(3)
+		self.orientation = 0
+
+	def get_props(self):
+		return TrioPage.PROPS
+
+	def gen(self, drawer):
+		x, y = [0] * 3, [0] * 3
+		if self.orientation == 0:
+			h = (drawer.height - 2*drawer.sep) / 3
+			w = drawer.width
+			y[1] = h + drawer.sep
+			y[2] = 2*h + 2*drawer.sep
+		else:
+			w = (drawer.width - 2*drawer.sep) / 3
+			h = drawer.height
+			x[1] = w + drawer.sep
+			x[2] = 2*w + 2*drawer.sep
+		
+		for i in range(0, 3):
+			drawer.draw_image(
+				self.image[i],
+				Box(x[i], y[i], w, h),
+				Style(self, i))
+
+	def gen_miniature(drawer):
+		w, h = drawer.width, (drawer.height - 4)/3.
+		y = 0
+		for i in range(0, 3):
+			drawer.draw_miniature_image("image%d" % i, Box(0, y, w, h))
+			y += h + 2
+
+
 # Text page
 class OnlyTextPage(Page):
 
@@ -228,3 +273,4 @@ add(CenterPage)
 add(DuoPage)
 add(OnlyTextPage)
 add(BlankPage)
+add(TrioPage)

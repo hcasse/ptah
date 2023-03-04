@@ -186,7 +186,7 @@ class Page(util.AttrMap, props.Container):
 			self.vertical_shift = [None] * n
 			self.border_style = [BORDER_NONE] * n
 			self.border_width = [BORDER_MEDIUM] * n
-			self.border_color = ["#000000"] * N
+			self.border_color = ["#000000"] * n
 	
 	def init_text(self, n  = 1):
 		"""Initialize the text count and their properties."""
@@ -250,7 +250,7 @@ def type_pages(self, pages, album):
 		try:
 			page = PAGE_MAP[type]()
 		except KeyError:
-			raise CheckError("page type %s is unknown!" % type)
+			raise util.CheckError("page type %s is unknown!" % type)
 
 		# initialize the page
 		page.album = album

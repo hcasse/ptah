@@ -304,19 +304,20 @@ def type_enum(vals):
 	return fun
 
 def type_color(self, col, obj):
-	col = col.strip().lower()
-	if col.startswith('#'):
-		if len(col) == 7:
+	if isinstance(col, str):
+		col = col.strip().lower()
+		if col.startswith('#'):
+			if len(col) == 7:
+				try:
+					int(col[1:], 16)
+					return col
+				except ValueError:
+					pass
+		else:
 			try:
-				int(col[1:], 16)
-				return col
-			except ValueError:
+				return HTML_COLORS[col]
+			except KeyError:
 				pass
-	else:
-		try:
-			return HTML_COLORS[col]
-		except KeyError:
-			pass
 	raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
 
 def type_length(self, val, obj):

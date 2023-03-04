@@ -27,3 +27,15 @@ pages:
     image: photos/ice.jpeg
     border-width: 1mm
     border-style: dashed
+
+  - name: fifth
+    type: trio
+    image#1: photos/ice.jpeg
+    border-color#1: "#FF0000"
+    border-width#1: thin
+    image#2: photos/reed.jpeg
+    border-color#2: "#FF0000"
+    border-width#2: medium
+    image#3: photos/vulture.jpeg
+    border-color#3: "#FF0000"
+    border-width#3: thick
