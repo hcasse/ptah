@@ -1,0 +1,20 @@
+title: Border Test Album
+author: H. Cassé
+date: 02/03/2023
+format: a4
+background-color: ivory
+pages:
+
+  - name: first
+    type: center
+    image: photos/ice.jpeg
+    border-color: "#FF0000"
+    border-width: thick
+    shadow: simple
+
+  - name: second
+    type: center
+    image: photos/ice.jpeg
+    border-color: "#FF0000"
+    border-width: thick
+    shadow: fuzzy

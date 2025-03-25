@@ -4,3 +4,5 @@ test/*.log
 test/*.pdf
 test/*.tex
 tmp/
+/.kdev4
+/ptah.kdev4

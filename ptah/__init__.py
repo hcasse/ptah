@@ -4,6 +4,7 @@ import os
 import yaml
 from ptah import format
 from ptah import props
+from ptah.props import Property
 from ptah import util
 from ptah.graph import Style
 
@@ -67,6 +68,12 @@ ALIGNMENTS = [
 	"top-left"
 ]
 
+SHADOW_NONE = 0
+SHADOW_SIMPLE = 1
+SHADOW_FUZZY = 2
+shadow_list = ["none", "simple", "fuzzy"]
+shadow_type = props.type_enum(shadow_list)
+
 
 # background properties
 BACKGROUND_COLOR_PROP = props.ColorProperty(
@@ -77,16 +84,32 @@ BACKGROUND_MODE_PROP = props.EnumProperty("background-mode",
 	"Background image mode.", [ "fit", "stretch", "fill", "tile" ])
 
 # image properties
-MODE_PROP = props.EnumProperty("mode", "image mode",
-	[ "fit", "stretch", "fill" ])
-ALIGN_PROP = props.EnumProperty("align", "image alignment", ALIGNMENTS)
+mode_list = [ "fit", "stretch", "fill" ]
+MODE_PROP = Property(
+	"mode",
+	"image mode, one of " + ", ".join(mode_list) + ".",
+	props.type_enum(mode_list),
+	default = MODE_FIT)
+ALIGN_PROP = Property(
+	"align",
+	"image alignment, one of " + ", ".join(ALIGNMENTS),
+	props.type_enum(ALIGNMENTS),
+	default = ALIGN_CENTER)
 IMAGE_PROP = props.ImageProperty("image", "image", mode = PROP_REQ)
 NAME_PROP = props.StringProperty("name", "name")
-SCALE_PROP = props.FloatProperty("scale", "image scale")
-HORIZONTAL_SHIFT_PROP = props.LengthProperty("horizontal-shift",
-	"shift in % of the image width")
-VERTICAL_SHIFT_PROP = props.LengthProperty("vertical-shift",
-	"shift in % of the image height")
+SCALE_PROP = Property(
+	"scale",
+	"image scale.",
+	props.type_float,
+	default = 1.)
+HORIZONTAL_SHIFT_PROP = Property(
+	"horizontal-shift",
+	"shift in % of the image width.",
+	props.type_length)
+VERTICAL_SHIFT_PROP = Property(
+	"vertical-shift",
+	"shift in % of the image height.",
+	props.type_length)
 
 # text properties
 TEXT_ALIGN_PROP = props.EnumProperty("text-align", "Text alignment.", ALIGNMENTS)
@@ -102,21 +125,54 @@ FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_enum([
 BORDER_STYLE = props.Property(
 	"border-style",
 	"Style for the border.",
-	border_style_type
+	border_style_type,
+	default = BORDER_NONE
 )
 BORDER_COLOR = props.Property(
 	"border-color",
 	"Color for border of an image.",
 	props.type_color,
 	mode = PROP_INH,
+	default = "#000000",
 	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
 BORDER_WIDTH = props.Property(
 	"border-width",
 	"width of border lines: length or one of " + ", ".join(border_width_enum) + ".",
 	border_width_type,
 	mode = PROP_INH,
+	default = BORDER_MEDIUM,
 	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
 
+# shadow properties
+SHADOW_STYLE = props.Property(
+	"shadow",
+	"select the shadow type between " + ", ".join(shadow_list) + ".",
+	shadow_type,
+	mode = PROP_INH,
+	default = SHADOW_NONE)
+SHADOW_XOFFSET = props.Property(
+	"shadow-xoffset",
+	"shadow horizontal offset.",
+	props.type_length,
+	mode = PROP_INH,
+	default = 1.5)
+SHADOW_YOFFSET = props.Property(
+	"shadow-yoffset",
+	"shadow vertical offset.",
+	props.type_length,
+	mode = PROP_INH,
+	default = 1.5)
+SHADOW_COLOR = props.Property(
+	"shadow-color",
+	"shadow color.",
+	props.type_color,
+	mode = PROP_INH,
+	default = "#000000")
+SHADOW_OPACITY = props.Property(
+	"shadow-opacity",
+	"shadow opacity as percent value (100% opaque, 0% transparent).",
+	props.type_percent,
+	mode = PROP_INH)
 
 class Page(util.AttrMap, props.Container):
 	"""A page in the created album."""
@@ -137,7 +193,12 @@ class Page(util.AttrMap, props.Container):
 		VERTICAL_SHIFT_PROP,
 		BORDER_STYLE,
 		BORDER_WIDTH,
-		BORDER_COLOR
+		BORDER_COLOR,
+		SHADOW_STYLE,
+		SHADOW_XOFFSET,
+		SHADOW_YOFFSET,
+		SHADOW_OPACITY,
+		SHADOW_COLOR
 	]
 
 	TEXT_PROPS = [
@@ -167,26 +228,8 @@ class Page(util.AttrMap, props.Container):
 	def init_image(self, n = 1):
 		"""Initialize the image count and their properties."""
 		self.image_count = n
-		if n == 1:
-			self.image = None
-			self.mode = MODE_FIT
-			self.scale = 1.
-			self.align = ALIGN_CENTER
-			self.horizontal_shift = None
-			self.vertical_shift = None
-			self.border_style = BORDER_NONE
-			self.border_width = BORDER_MEDIUM
-			self.border_color = "#000000"
-		else:
-			self.image = [None] * n
-			self.mode = [MODE_FIT] * n
-			self.scale = [1.] * n
-			self.align = [ALIGN_CENTER] * n
-			self.horizontal_shift = [None] * n
-			self.vertical_shift = [None] * n
-			self.border_style = [BORDER_NONE] * n
-			self.border_width = [BORDER_MEDIUM] * n
-			self.border_color = ["#000000"] * n
+		for p in Page.IMAGE_PROPS:
+			p.init(self, n)
 	
 	def init_text(self, n  = 1):
 		"""Initialize the text count and their properties."""
@@ -228,10 +271,12 @@ class Page(util.AttrMap, props.Container):
 			drawer.declare_color(self.background_color)
 		if self.image_count == 1:
 			drawer.declare_color(self.border_color)
+			drawer.declare_color(self.shadow_color)
 		elif self.image_count > 1:
 			for c in self.border_color:
 				drawer.declare_color(c)
-
+			for c in self.shadow_color:
+				drawer.declare_color(c)
 
 
 def type_pages(self, pages, album):
@@ -295,6 +340,8 @@ class Album(util.AttrMap, props.Container):
 		self.date = None
 		self.background_color = None
 		self.background_image = None
+		for p in Page.IMAGE_PROPS:
+			p.init(self, 1, is_root = True)
 
 	def get_base(self):
 		return self.base

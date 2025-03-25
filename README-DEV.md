@@ -7,6 +7,17 @@ Set the `PYTHONPATH` to the top source directory:
 	export PYTHONPATH=$PYTHONPATH:$PWD
 
 
+## To Do
+
+[ ] Separate common options from page relative options.
+[ ] Add more page models.
+[ ] Add more paper models.
+[ ] Add shadow/glow style.
+[ ] Add font selection.
+[ ] Improve title page with bigger page.
+[ ] Add more Markdown syntax to text.
+
+
 ## Latex
 
 ### \includegrahics

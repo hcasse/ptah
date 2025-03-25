@@ -108,7 +108,9 @@ class Drawer(graph.Drawer, wiki.Handler):
 		self.tikz_packages = {
 			"patterns",
 			"patterns.meta",
-			"shapes.geometric"
+			"shapes.geometric",
+			"shadows",
+			"shadows.blur"
 		}
 		self.tcb_packages = {
 			"skins"
@@ -346,6 +348,36 @@ class Drawer(graph.Drawer, wiki.Handler):
 			if style.border_style != ptah.BORDER_SOLID:
 				props += ",%s" % BORDER_STYLES[style.border_style]
 			return props
+
+	def shadow_props(self, style):
+		if style.shadow == ptah.SHADOW_SIMPLE:
+			print("simple")
+			opacity = style.shadow_opacity
+			if opacity == None:
+				opacity = .25
+			return ",drop shadow={" + \
+				"fill=%s" % self.get_color(style.shadow_color) + \
+				",opacity=%s" % opacity + \
+				",shadow xshift=%smm" % style.shadow_xoffset + \
+				",shadow yshift=%smm" % (-style.shadow_yoffset) + \
+				"}"
+		elif style.shadow == ptah.SHADOW_FUZZY:
+			print("fuzzy")
+			opacity = style.shadow_opacity
+			if opacity == None:
+				opacity = 1.
+			radius = (style.shadow_xoffset + style.shadow_xoffset) / 3.
+			return ",blur shadow={" + \
+				"fill=%s" % self.get_color(style.shadow_color) + \
+				",opacity=%s" % opacity + \
+				",shadow xshift=%smm" % style.shadow_xoffset + \
+				",shadow yshift=%smm" % (-style.shadow_yoffset) + \
+				", shadow blur radius=%smm" % radius + \
+				",shadow blur steps=10" + \
+				", shadow blur extra rounding=%smm" % radius + \
+				"}"
+		else:
+			return ""
 	
 	def draw_border(self, x, y, W, H, style):
 		if style.border_style != ptah.BORDER_NONE:
@@ -363,12 +395,13 @@ class Drawer(graph.Drawer, wiki.Handler):
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
 		W, H = box.w, box.h
+		shadow = self.shadow_props(style)
 
 		# draw the image
 		if style.mode == ptah.MODE_FIT:
 			anchor,dx, dy = ALIGN[style.align](W, H)
-			write("\\node[%s,inner sep=0] at(%smm, %smm) (A) {" \
-				% (anchor, x + dx, y + dy))
+			write("\\node[%s%s,inner sep=0] at(%smm, %smm) (A) {" \
+				% (anchor, shadow, x + dx, y + dy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
 				% (box.w, box.h, path));
 			write("};\n")
@@ -397,11 +430,11 @@ class Drawer(graph.Drawer, wiki.Handler):
 			else:
 				sh = H * style.scale
 				param = "height=%smm" % sh
-				if style.xshift != None:
+				if style.horizontal_shift != None:
 					sw = w * H / h * style.scale
-					dx += style.xshift.get(sw)
-				if style.yshift != None:
-					dy -= style.yshift.get(sh)
+					dx += style.horizontal_shift.get(sw)
+				if style.vertical_shift != None:
+					dy -= style.vertical_shift.get(sh)
 
 			# generate the code
 			write("\\begin{scope}\n")
@@ -511,7 +544,7 @@ class DocDrawer(Drawer):
 		Drawer.__init__(self, ptah.Album("ptah.ptah"))
 		self.album.pages = []
 
-		for col in ptah.props.HTML_COLORS.values():
+		for col in graph.HTML_COLORS.values():
 			self.declare_color(col)
 		self.use_package("listings")
 		self.album.title = "Ptah Documentation"
@@ -619,7 +652,7 @@ class DocDrawer(Drawer):
 		write("\\paragraph{Named colors}~~~\n\n")
 		write("\\bigskip\\small\\begin{tabular}{clclclcl}\n")
 		n = 0
-		for (name, col) in ptah.props.HTML_COLORS.items():
+		for (name, col) in graph.HTML_COLORS.items():
 			write("{\\color{%s}\\rule{8mm}{4mm}} & %s" %
 				(self.get_color(col), name))
 			n = n + 1

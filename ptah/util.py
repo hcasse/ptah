@@ -52,17 +52,37 @@ def parse_dict(data, base, props):
 
 	# pick the properties
 	for (key, val) in data.items():
-		try:
-			p = key.find('#')
-			if p < 0:
-				props[key].set_scalar(val, base)
-			else:
-				id = key[:p]
+		print("DEBUG:", key, val)
+		p = key.find('#')
+
+		# single value
+		if p < 0:
+			try:
+				p = props[key]
+			except KeyError:
+				p = None
+			if p != None:
+				try:
+					p.set_scalar(val, base)
+				except ValueError:
+					raise CheckError("bad index %s" % key)
+
+		# multiple value
+		else:
+			id = key[:p]
+			try:
 				i = int(key[p+1:]) - 1
-				props[id].set_indexed(i, val, base)
-		except ValueError as e:
-			raise CheckError("bad index %s" % key)
-		except KeyError:
+			except ValueError:
+				raise CheckError("bad index %s" % key)
+			try:
+				p = props[id]
+			except KeyError:
+				p = None
+			if p != None:
+				p.set_indexed(i, val, base)
+
+		# no property found?
+		if p == None:
 			base.set_attr(key, data[key])
 
 	# check the properties
