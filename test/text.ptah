@@ -10,8 +10,8 @@ pages:
     text: |
       This is a simple.
 
-      Made of several lines.
+      Made of **several** lines.
 
-      One line.
+      *One line*.
 
       Another line and another and another and another.

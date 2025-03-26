@@ -8,37 +8,13 @@ import ptah.props
 import subprocess
 import sys
 from ptah import graph
+import ptah.text
 from ptah import util
-from ptah import wiki
 from PIL import Image
-from ptah.wiki import markdown
 
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
 MINIATURE_BACK = "yellow!50!white"
-
-
-ESCAPES = {
-	'%': '\\%',
-	'<': '{$<$}',
-	'>': '{$>$}',
-	'_': '\\_',
-	'^': '\\^{}',
-	'&'	: '\\&',
-	'$'	: '\\$',
-	'#'	: '\\#',
-	'_'	: '\\_',
-	'{'	: '\\{',
-	'}'	: '\\}',
-	'~'	: '{$\sim$}',
-	'\\': '{$\\backslash$}'
-}
-
-STYLES = {
-	wiki.TYPE_BOLD: "\\textbf{",
-	wiki.TYPE_ITALIC: "\\textit{",
-	wiki.TYPE_CODE: "\\texttt{"
-}
 
 
 ALIGN = [
@@ -88,7 +64,7 @@ PROLOG = \
 \\usepackage[utf8]{inputenc}
 """
 
-class Drawer(graph.Drawer, wiki.Handler):
+class Drawer(graph.Drawer):
 
 	def __init__(self, album = None):
 		graph.Drawer.__init__(self, album)
@@ -116,41 +92,14 @@ class Drawer(graph.Drawer, wiki.Handler):
 			"skins"
 		}
 		self.doctype = "book"
-		syntax = markdown.make(self)
-		syntax.add_token(wiki.ReplaceToken(
-			"latex_escape", ESCAPES, syntax.on_text))
-		self.wiki = wiki.Parser(syntax)
-		self.reset_wiki()
 		self.lmargin = album.format.oddside_margin
 		self.rmargin = album.format.evenside_margin
 		self.bmargin = album.format.bottom_margin
 		self.tmargin = album.format.top_margin
 
-	# wiki.Handler functions
-	def reset_wiki(self):
-		self.one_par = False
-
-	def on_text(self, text):
-		self.out.write(text)
-
-	def begin_style(self, style):
-		try:
-			self.out.write(STYLES[style])
-		except KeyError:
-			pass
-
-	def end_style(self, style):
-		if style in STYLES:
-			self.out.write("}")
-
-	def begin_par(self):
-		if not self.one_par:
-			self.one_par = True
-		else:
-			self.out.write("\\\\\n")
-
-	def on_line_end(self):
-		self.out.write("\n")
+		# text support
+		self.text_syntax = ptah.text.Syntax()
+		self.text_gen = None
 
 	# Drawer functions
 	def gen(self):
@@ -214,10 +163,10 @@ class Drawer(graph.Drawer, wiki.Handler):
 			if bg == None:
 				bg = "#FFFFFF"
 			write("\\pagecolor{%s}\n" % self.get_color(bg))
-			
+
 			# begin tikz
 			write("\\noindent\\begin{tikzpicture}\n")
-			
+
 			# background image
 			if page.background_image != None:
 				self.gen_background_image(page)
@@ -246,11 +195,11 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("""\\end{tikzpicture}\n\n""")
 
 			# even/odd page management
-			self.lmargin, self.rmargin = self.rmargin, self.lmargin	
+			self.lmargin, self.rmargin = self.rmargin, self.lmargin
 
 	def gen_declaration(self):
 		write = self.out.write
-		
+
 		# write prolog
 		write("\\documentclass[a4paper]{%s}\n" % self.doctype)
 		write(PROLOG)
@@ -281,7 +230,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		write("left = 0mm,\n")
 		write("right = 0mm\n")
 		write("}\n")
-		
+
 	def get_size(self, path):
 		i = Image.open(path)
 		return i.size
@@ -308,13 +257,13 @@ class Drawer(graph.Drawer, wiki.Handler):
 				% (cx, cy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}};"
 				% (self.format.width, self.format.height, path))
-			
+
 		elif page.background_mode == ptah.MODE_STRETCH:
 			write("\\node[overlay, inner sep=0, anchor=north west] at(%smm, %smm) {"
 				% (-self.width/2-self.lmargin, self.height/2+self.tmargin))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}};\n"
 				% (self.format.width, self.format.height, path))
-			
+
 		elif page.background_mode == ptah.MODE_FILL:
 			w, h = self.get_size(path)
 			W, H = self.format.width, self.format.height
@@ -378,7 +327,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 				"}"
 		else:
 			return ""
-	
+
 	def draw_border(self, x, y, W, H, style):
 		if style.border_style != ptah.BORDER_NONE:
 			self.out.write(
@@ -447,11 +396,11 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("};\n")
 			write("\\end{scope}\n")
 			self.draw_border(x, y, W, H, style)
-			
+
 		else:
 			print("ERROR: unknown mode", style.mode)
 			exit(1)
-		
+
 	def remap(self, x, y):
 		return (x - self.dx, self.dy - y)
 
@@ -462,7 +411,7 @@ class Drawer(graph.Drawer, wiki.Handler):
 		align = TEXT_ALIGN[style.text_align]
 		if util.DEBUG:
 			write("\\node[minimum width=%smm, minimum height=%smm, draw] at(%smm, %smm) {};\n"
-				% (box.w, box.h, x, y)) 
+				% (box.w, box.h, x, y))
 		write("\\node[")
 		write("text width=%smm, " % box.w)
 		font_size = FONT_SIZES[style.font_size]
@@ -472,8 +421,10 @@ class Drawer(graph.Drawer, wiki.Handler):
 			write("draw, ")
 		write("align=%s, %s, inner sep=0] at(%smm, %smm) {"
 			% (align, anc, x + dx, y + dy))
-		self.reset_wiki()
-		self.wiki.parse_text(text)
+		parsed_text = self.text_syntax.parse(text)
+		if self.text_gen is None:
+			self.text_gen = ptah.text.Output(self.out)
+		self.text_gen.output(parsed_text)
 		write("};\n")
 
 	def declare_color(self, color):
@@ -560,18 +511,19 @@ class DocDrawer(Drawer):
 			2)
 		self.mini_drawer = Drawer(self.mini)
 
-		syntax = wiki.Syntax("latex-escape", self, [], [])
-		syntax.add_token(wiki.ReplaceToken(
-			"latex_escape", ESCAPES, syntax.on_text))
-		self.wiki = wiki.Parser(syntax)
+		# text support
+		self.text_syntax = ptah.text.Syntax()
+		self.text_gen = None
 
 	def gen_geometry(self):
 		pass
 
 	def write_text(self, text):
-		self.reset_wiki()
-		self.wiki.parse_text(text)
-		
+		parsed_text = self.text_syntax.parse(text)
+		if self.text_gen is None:
+			self.text_gen = ptah.text.Output(self.out)
+		self.text_gen.output(parsed_text)
+
 	def gen_body(self):
 		write = self.out.write
 		self.mini_drawer.out = self.out
@@ -582,7 +534,7 @@ class DocDrawer(Drawer):
 		write("\\begin{description}\n")
 		write("\\setlength\\itemsep{-1mm}\n")
 		for prop in ptah.ALBUM_PROPS.values():
-			write("\\item[%s]" % prop.id)
+			write("\\item[%s:]" % prop.id)
 			self.write_text(prop.get_description())
 			write("\n")
 		write("\\end{description}\n")
@@ -630,7 +582,7 @@ class DocDrawer(Drawer):
 					n = True
 				else:
 					n = False
-				write("\\item[%s%s]" % (prop.id, "\\#i" if n else ""))
+				write("\\item[%s%s:]" % (prop.id, "\\#i" if n else ""))
 				self.write_text(prop.get_description())
 				write("\n")
 			write("\\end{description}\n")

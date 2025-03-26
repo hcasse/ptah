@@ -26,7 +26,8 @@ class Property:
 	def __init__(self,
 			id, desc, fun,
 			mode = 0,
-			implies = lambda obj, index: None,
+			implies = lambda obj,
+			index: None,
 			default = None
 		):
 		self.id = id
@@ -78,7 +79,7 @@ class Property:
 		l = obj.__dict__[self.pid]
 		if not hasattr(l, "__setitem__"):
 			raise CheckError("property %s is not indexed in %s." %
-				(self.id, obj.name))			
+				(self.id, obj.name))
 		if i < 0 or i >= len(l):
 			raise CheckError("property %s#%d with bad index in %s." %
 				(self.id, i, obj.name))
@@ -134,7 +135,7 @@ class Property:
 						if x == None:
 							x = self.lookup_parent(obj)
 						l[i] = x
-			
+
 
 	def get_description(self):
 		"""Get the description of the property."""
@@ -200,7 +201,7 @@ def type_length(self, val, obj):
 			return graph.AbsLength(val)
 		elif val.endswith("%"):
 			return graph.PropLength(float(val[:-1]) / 100.)
-		else: 
+		else:
 			m = LENGTH_RE.match(val)
 			if m != None:
 				return graph.AbsLength(
@@ -258,7 +259,7 @@ def LengthProperty(id, desc, mode = 0):
 def BoolProperty(id, desc, mode = 0):
 	return Property(id, desc, type_bool, mode)
 
-	
+
 class Container:
 	"""Class that may contain sub-objects."""
 

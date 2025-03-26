@@ -52,7 +52,7 @@ def parse_dict(data, base, props):
 
 	# pick the properties
 	for (key, val) in data.items():
-		print("DEBUG:", key, val)
+		#print("DEBUG:", key, val)
 		p = key.find('#')
 
 		# single value
