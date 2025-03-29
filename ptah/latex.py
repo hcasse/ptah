@@ -3,6 +3,7 @@
 import os
 import os.path
 import ptah
+import ptah.font
 import ptah.format
 import ptah.props
 import subprocess
@@ -598,6 +599,15 @@ class DocDrawer(Drawer):
 		write("\\end{description}\n")
 		write("More to come.")
 
+		# dump fonts
+		write("\\section{Fonts}\n")
+		for font in ptah.font.get_fonts():
+			if font.avail:
+				write(f"\paragraph{{{font.name}}}:~\n\n{{")
+				font.use(self.out)
+				write("ABCDEFGHIJKLMNOPQRSTUVWXYZ\n\n")
+				write("abcdefghijklmnopqrstuvwxyz}\n\n")
+
 		# dump colors
 		write("\\section{Colors}\n")
 		write("Colors follows HTML notation: \\texttt{\\#RRGGBB} with R, G, B hexadecimal.\n")
@@ -618,5 +628,6 @@ class DocDrawer(Drawer):
 
 def gen_doc():
 	"""Generate the documentation."""
+	ptah.font.check()
 	drawer = DocDrawer()
 	drawer.gen()

@@ -34,5 +34,13 @@ Set the `PYTHONPATH` to the top source directory:
 
 ### Fonts
 
+[Using fonts](https://tex.stackexchange.com/questions/25249/how-do-i-use-a-particular-font-for-a-small-section-of-text-in-my-document)
+
 [Font Catalog](https://tug.org/FontCatalogue/)
 
+[Which fonts are installed?](https://tex.stackexchange.com/questions/2305/what-fonts-are-installed-on-my-box/2308#2308)
+
+Commands:
+* \usefont{encoding}{family}{series}{shape}
+* \usepackage{FONT}
+* \fontfamily{...}\selectfont
