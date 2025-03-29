@@ -16,12 +16,17 @@
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""Management of Latex fonts."""
+
 import os
 import os.path
 import re
 import shutil
 import subprocess
 import tempfile
+
+def normalize(s):
+	return s.lower().replace(' ', '')
 
 class FontTester:
 	"""Tester for a font in the current installation."""
@@ -77,7 +82,7 @@ class DefaultFontTester(FontTester):
 			key = m.group(1)
 			try:
 				self.map[key].avail = False
-				print("DEBUG:", key, " not found!")
+				#print("DEBUG:", key, " not found!")
 				return True
 			except KeyError:
 				pass
@@ -133,12 +138,12 @@ FONT_LIST = [
 	DefaultFont("pzc", "Zapf Chancery")
 ]
 
-FONT_MAP = { f.name: f for f in FONT_LIST }
+FONT_MAP = { normalize(f.name): f for f in FONT_LIST }
 
 def find(name):
 	"""Look for a font. Return found font or None."""
 	try:
-		font = FONT_MAP[name]
+		font = FONT_MAP[normalize(name)]
 		if font.avail != False:
 			return font
 	except KeyError:

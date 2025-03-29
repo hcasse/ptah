@@ -76,7 +76,7 @@ def MapType(Type):
 
 def UnionType(Type):
 
-	def __init__(self.types):
+	def __init__(self, types):
 		self.types = types
 
 	def check(self, text):
@@ -86,4 +86,4 @@ def UnionType(Type):
 			except TypeError:
 				pass
 		raise TypeError()
-	
+

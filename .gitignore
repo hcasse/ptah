@@ -6,3 +6,7 @@ test/*.tex
 tmp/
 /.kdev4
 /ptah.kdev4
+
+/build
+/dist
+/ptah.egg-info
