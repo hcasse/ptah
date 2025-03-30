@@ -31,7 +31,7 @@ class PropLength(Length):
 
 	def __str__(self):
 		return str(self.val) + "%"
-	
+
 
 class Point:
 
@@ -103,9 +103,11 @@ class TextStyle:
 		if i == None:
 			self.text_align = obj.text_align
 			self.font_size = obj.font_size
+			self.font = obj.font
 		else:
 			self.text_align = obj.text_align[i]
 			self.font_size = obj.font_size[i]
+			self.font = obj.font[i]
 
 
 class Drawer:

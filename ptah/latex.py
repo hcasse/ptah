@@ -3,6 +3,7 @@
 import os
 import os.path
 import ptah
+from ptah import FontSize
 import ptah.font
 import ptah.format
 import ptah.props
@@ -42,15 +43,17 @@ TEXT_ALIGN = [
 	"left"
 ]
 
-FONT_SIZES = [
-	"\\tiny",
-	"\\footnotesize",
-	"\\small",
-	"",
-	"\\Large",
-	"\\LARGE",
-	"\\HUGE"
-]
+FONT_SIZES = {
+	FontSize.XX_SMALL: 	"\\tiny",
+	FontSize.X_SMALL: 	"\\footnotesize",
+	FontSize.SMALL: 	"\\small",
+	FontSize.MEDIUM: 	"",
+	FontSize.LARGE: 	"\\Large",
+	FontSize.X_LARGE: 	"\\LARGE",
+	FontSize.XX_LARGE:	"\\HUGE"
+}
+
+
 
 BORDER_STYLES = [
 	"",
@@ -420,8 +423,9 @@ class Drawer(graph.Drawer):
 			write("font=%s, " % font_size)
 		if util.DEBUG:
 			write("draw, ")
-		write("align=%s, %s, inner sep=0] at(%smm, %smm) {"
-			% (align, anc, x + dx, y + dy))
+		write(f"align={align}, {anc}, inner sep=0] at({x + dx}mm, {y + dy}mm) {{")
+		if style.font is not None:
+			style.font.use(self.out)
 		parsed_text = self.text_syntax.parse(text)
 		if self.text_gen is None:
 			self.text_gen = ptah.text.Output(self.out)

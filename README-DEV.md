@@ -9,13 +9,21 @@ Set the `PYTHONPATH` to the top source directory:
 
 ## To Do
 
+[ ] add option to generate one or several pages
+
+[ ] Set up hierarchycal model for properties.
+[ ] "default" entry properties.
+[ ] "styles" entry.
+[ ] 'style" support in pages and so on.
+
 [ ] Separate common options from page relative options.
 [ ] Add more page models.
-[ ] Add more paper models.
+[ ] Add more format models.
 [ ] Add shadow/glow style.
 [ ] Add font selection.
 [ ] Improve title page with bigger page.
-[ ] Add more Markdown syntax to text.
+
+[x] Add more Markdown syntax to text.
 
 
 ## Latex

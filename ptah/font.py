@@ -25,8 +25,7 @@ import shutil
 import subprocess
 import tempfile
 
-def normalize(s):
-	return s.lower().replace(' ', '')
+import ptah.util
 
 class FontTester:
 	"""Tester for a font in the current installation."""
@@ -138,12 +137,12 @@ FONT_LIST = [
 	DefaultFont("pzc", "Zapf Chancery")
 ]
 
-FONT_MAP = { normalize(f.name): f for f in FONT_LIST }
+FONT_MAP = { ptah.util.normalize(f.name): f for f in FONT_LIST }
 
 def find(name):
 	"""Look for a font. Return found font or None."""
 	try:
-		font = FONT_MAP[normalize(name)]
+		font = FONT_MAP[name]
 		if font.avail != False:
 			return font
 	except KeyError:

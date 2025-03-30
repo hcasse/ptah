@@ -106,7 +106,7 @@ class DuoPage(Page):
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.
-		drawer.draw_miniature_image("image1", Box(0, 0, drawer.width, h))
+		drawer.draw_miniature_image("image0", Box(0, 0, drawer.width, h))
 		drawer.draw_miniature_image("image1", Box(0, h+2, drawer.width, h))
 
 
@@ -140,7 +140,7 @@ class TrioPage(Page):
 			h = drawer.height
 			x[1] = w + drawer.sep
 			x[2] = 2*w + 2*drawer.sep
-		
+
 		for i in range(0, 3):
 			drawer.draw_image(
 				self.image[i],
@@ -188,10 +188,10 @@ class OnlyTextPage(Page):
 
 # Blank page
 class BlankPage(Page):
-	
+
 	NAME = "blank"
 	PROPS = props.make(Page.PAGE_PROPS)
-	
+
 	def __init__(self):
 		Page.__init__(self)
 
@@ -217,9 +217,9 @@ class TitlePage(Page):
 		self.title_left = .15
 		self.title_right = .15
 		self.title_bot = .4
-		self.font_size[0] = ptah.FONT_SIZE_XX_LARGE
-		self.font_size[1] = ptah.FONT_SIZE_LARGE
-		self.font_size[2] = ptah.FONT_SIZE_LARGE
+		self.font_size[0] = ptah.FontSize.XX_LARGE
+		self.font_size[1] = ptah.FontSize.LARGE
+		self.font_size[2] = ptah.FontSize.LARGE
 		self.text_align[0] = ptah.ALIGN_BOTTOM
 		self.text_align[1] = ptah.ALIGN_CENTER
 		self.text_align[2] = ptah.ALIGN_CENTER
@@ -251,7 +251,7 @@ class TitlePage(Page):
 				Box(x, y, w, self.other_height),
 				graph.TextStyle(self, 2)
 			)
-			
+
 	def gen_miniature(drawer):
 		ht = drawer.height / 4
 		hd = 5
@@ -263,7 +263,7 @@ class TitlePage(Page):
 		drawer.draw_miniature_text("date\\#2", Box(3, y, w, hd))
 		y += hd + 1
 		drawer.draw_miniature_text("author\\#3", Box(3, y, w, ha))
-		
+
 
 # Page initialization
 def add(cls):

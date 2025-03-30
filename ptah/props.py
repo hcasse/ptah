@@ -4,7 +4,8 @@ import os
 import re
 
 import ptah
-from ptah.util import CheckError
+import ptah.font
+from ptah.util import CheckError, CONSOLE, normalize
 from ptah import graph
 
 def implies_def(obj, index):
@@ -178,6 +179,16 @@ def type_enum(vals):
 			(obj.name, id, ", ".join(vals)))
 	return fun
 
+def type_penum(cls):
+	"""Type support for a Python enumeration."""
+	map = { normalize(x.name): x for x in cls }
+	def convert(self, val, obj):
+		try:
+			return map[normalize(val).strip()]
+		except KeyError:
+			raise CheckError(f"{val} in {obj.name} must be one of {', '.join([normalize(x.name) for x in cls])}")
+	return convert
+
 def type_color(self, col, obj):
 	if isinstance(col, str):
 		col = col.strip().lower()
@@ -227,7 +238,7 @@ def type_union(types):
 		raise CheckError("cannot parse %s in %s" % (self.id, obj.name))
 	return fun
 
-def type_percent(val, obj):
+def type_percent(self, val, obj):
 	"""Parse a percent argument like FLOAT% or FLOAT in [0, 1].
 	Return a value in [0, 1]."""
 	try:
@@ -241,6 +252,22 @@ def type_percent(val, obj):
 		pass
 	raise CheckError("cannot parse value %s for %s in %s" %
 		(val, self.id, obj.name))
+
+
+FONT_WITH_ERROR = set()
+
+def type_font(self, val, obj):
+	"""Convert val to a font. Display a warning if the
+	font does not exists and returns None."""
+	val = ptah.util.normalize(val).strip()
+	font = ptah.font.find(val)
+	if font is not None:
+		return font
+	else:
+		if val not in FONT_WITH_ERROR:
+			FONT_WITH_ERROR.add(val)
+		CONSOLE.warn(f"cannot find font {val} in {obj.name}! Reverting to default.")
+		return None
 
 
 # For compatibility

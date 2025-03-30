@@ -1,6 +1,7 @@
 """Misc. utilities for ptah."""
 
 from string import Template
+import sys
 
 DEBUG = False
 
@@ -88,3 +89,16 @@ def parse_dict(data, base, props):
 	# check the properties
 	for prop in props.values():
 		prop.check(base)
+
+def normalize(s):
+	"""Normalize s to lower case and remove spaces."""
+	return s.lower().replace(' ', '').replace('_', '-')
+
+class Console:
+	"""Console for user interaction."""
+	stderr = sys.stderr
+
+	def warn(self, msg):
+		self.stderr.write(f"WARNING: {msg}\n")
+
+CONSOLE = Console()

@@ -1,5 +1,6 @@
 """Ptah is a utility to generate photo album. This is the main library."""
 
+from enum import Enum
 import os
 import yaml
 from ptah import format
@@ -29,15 +30,14 @@ ALIGN_BOTTOM_LEFT = 6
 ALIGN_LEFT = 7
 ALIGN_TOP_LEFT = 8
 
-FONT_SIZE_XX_SMALL = 0
-FONT_SIZE_X_SMALL = 1
-FONT_SIZE_SMALL = 2
-FONT_SIZE_MEDIUM = 3
-FONT_SIZE_LARGE = 4
-FONT_SIZE_X_LARGE = 5
-FONT_SIZE_XX_LARGE = 6
-FONT_SIZE_SMALLER = 7
-FONT_SIZE_LARGER = 8
+class FontSize(Enum):
+	XX_SMALL = 0
+	X_SMALL = 1
+	SMALL = 2
+	MEDIUM = 3
+	LARGE = 4
+	X_LARGE = 5
+	XX_LARGE = 6
 
 BORDER_THIN = 0
 BORDER_MEDIUM = 1
@@ -114,12 +114,8 @@ VERTICAL_SHIFT_PROP = Property(
 # text properties
 TEXT_ALIGN_PROP = props.EnumProperty("text-align", "Text alignment.", ALIGNMENTS)
 TEXT_PROP = props.StringProperty("text", "Page text.")
-FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_enum([
-	"xx-small", "x-small", "small",
-	"medium",
-	"large", "x-large", "xx-large",
-	"smaller", "larger"
-]))
+FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_penum(FontSize))
+FONT_PROP = props.Property("font", "font name", props.type_font)
 
 # border properties
 BORDER_STYLE = props.Property(
@@ -204,7 +200,8 @@ class Page(util.AttrMap, props.Container):
 	TEXT_PROPS = [
 		TEXT_PROP,
 		TEXT_ALIGN_PROP,
-		FONT_SIZE_PROP
+		FONT_SIZE_PROP,
+		FONT_PROP
 	]
 
 	NAME = ""
@@ -230,19 +227,21 @@ class Page(util.AttrMap, props.Container):
 		self.image_count = n
 		for p in Page.IMAGE_PROPS:
 			p.init(self, n)
-	
+
 	def init_text(self, n  = 1):
 		"""Initialize the text count and their properties."""
 		self.text_count = 0
 		if n == 1:
 			self.text = None
 			self.text_align = ALIGN_CENTER
-			self.font_size = FONT_SIZE_MEDIUM
+			self.font_size = FontSize.MEDIUM
+			self.font = None
 		else:
 			self.text = [None] * n
 			self.text_align =  [ALIGN_CENTER] * n
-			self.font_size =  [FONT_SIZE_MEDIUM] * n
-		
+			self.font_size =  [FontSize.MEDIUM] * n
+			self.font = [None] * n
+
 	def check(self):
 		"""Function called to check the attributes when the page is loaded.
 		Raise CheckError if there is an error."""
@@ -358,7 +357,7 @@ class Album(util.AttrMap, props.Container):
 				util.parse_dict(desc, self, ALBUM_PROPS)
 			return True
 		except yaml.YAMLError as e:
-			raise CheckError(str(e))
+			raise util.CheckError(str(e))
 
 
 

@@ -1,0 +1,32 @@
+title: Font Test Album
+author: H. Cassé
+date: 24/01/2023
+format: a4
+background-color: white
+pages:
+
+  - name: normal
+    type: center
+    image: photos/reed.jpeg
+    text: "**Normal font**
+
+
+Started earnest brother believe an exposed so. Me he believing daughters if forfeited at furniture. Age again and stuff downs spoke. Late hour new nay able fat each sell. Nor themselves age introduced frequently use unsatiable devonshire get. They why quit gay cold rose deal park. One same they four did ask busy. Reserved opinions fat him nay position. Breakfast as zealously incommode do agreeable furniture. One too nay led fanny allow plate."
+
+  - name: avant-garde
+    font: avant garde
+    type: center
+    image: photos/reed.jpeg
+    text: "**Avant Garde**
+
+
+Started earnest brother believe an exposed so. Me he believing daughters if forfeited at furniture. Age again and stuff downs spoke. Late hour new nay able fat each sell. Nor themselves age introduced frequently use unsatiable devonshire get. They why quit gay cold rose deal park. One same they four did ask busy. Reserved opinions fat him nay position. Breakfast as zealously incommode do agreeable furniture. One too nay led fanny allow plate."
+
+  - name: uncial
+    font: uncial
+    type: center
+    image: photos/reed.jpeg
+    text: "**Uncial**
+
+
+Started earnest brother believe an exposed so. Me he believing daughters if forfeited at furniture. Age again and stuff downs spoke. Late hour new nay able fat each sell. Nor themselves age introduced frequently use unsatiable devonshire get. They why quit gay cold rose deal park. One same they four did ask busy. Reserved opinions fat him nay position. Breakfast as zealously incommode do agreeable furniture. One too nay led fanny allow plate."
