@@ -39,6 +39,7 @@ class Align(Enum):
 	TOP_LEFT = 8
 
 class FontSize(Enum):
+	"""Enumeration of font sizes."""
 	XX_SMALL = 0
 	X_SMALL = 1
 	SMALL = 2
@@ -47,40 +48,32 @@ class FontSize(Enum):
 	X_LARGE = 5
 	XX_LARGE = 6
 
-BORDER_THIN = 0
-BORDER_MEDIUM = 1
-BORDER_THICK = 2
-border_width_enum = ["thin", "medium", "thick"]
+class BorderWidth(Enum):
+	"""Enumeration of symbolic border widths."""
+	THIN = 0
+	MEDIUM = 1
+	THICK = 2
+
 border_width_type = props.type_union([
-	props.type_enum(border_width_enum),
+	props.type_penum(BorderWidth),
 	props.type_length
 ])
 
-BORDER_NONE = 0
-BORDER_SOLID = 1
-BORDER_DOTTED = 2
-BORDER_DASHED = 3
-BORDER_DOUBLE = 4
-border_style_enum = ["none", "solid", "dotted", "dashed", "double"]
-border_style_type = props.type_enum(border_style_enum)
+class BorderStyle(Enum):
+	"""Enumeration of border styles."""
+	NONE = 0
+	SOLID = 1
+	DOTTED = 2
+	DASHED = 3
+	DOUBLE = 4
+border_style_type = props.type_penum(BorderStyle)
 
-ALIGNMENTS = [
-	"center",
-	"top",
-	"top-right",
-	"right",
-	"bottom-right",
-	"bottom",
-	"bottom-left",
-	"left",
-	"top-left"
-]
-
-SHADOW_NONE = 0
-SHADOW_SIMPLE = 1
-SHADOW_FUZZY = 2
-shadow_list = ["none", "simple", "fuzzy"]
-shadow_type = props.type_enum(shadow_list)
+class Shadow(Enum):
+	"""Enumeration of shadow types."""
+	NONE = 0
+	SIMPLE = 1
+	FUZZY = 2
+shadow_type = props.type_penum(Shadow)
 
 
 # background properties
@@ -129,7 +122,7 @@ BORDER_STYLE = props.Property(
 	"border-style",
 	"Style for the border.",
 	border_style_type,
-	default = BORDER_NONE
+	default = BorderStyle.NONE
 )
 BORDER_COLOR = props.Property(
 	"border-color",
@@ -137,22 +130,22 @@ BORDER_COLOR = props.Property(
 	props.type_color,
 	mode = PROP_INH,
 	default = "#000000",
-	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
+	implies = props.implies_set(BORDER_STYLE, BorderStyle.NONE, BorderStyle.SOLID))
 BORDER_WIDTH = props.Property(
 	"border-width",
-	"width of border lines: length or one of " + ", ".join(border_width_enum) + ".",
+	f"width of border lines: length or one of {enum_list(BorderWidth)}.",
 	border_width_type,
 	mode = PROP_INH,
-	default = BORDER_MEDIUM,
-	implies = props.implies_set(BORDER_STYLE, BORDER_NONE, BORDER_SOLID))
+	default = BorderWidth.MEDIUM,
+	implies = props.implies_set(BORDER_STYLE, BorderStyle.NONE, BorderStyle.SOLID))
 
 # shadow properties
 SHADOW_STYLE = props.Property(
 	"shadow",
-	"select the shadow type between " + ", ".join(shadow_list) + ".",
+	f"select the shadow type among {enum_list(Shadow)}.",
 	shadow_type,
 	mode = PROP_INH,
-	default = SHADOW_NONE)
+	default = Shadow.NONE)
 SHADOW_XOFFSET = props.Property(
 	"shadow-xoffset",
 	"shadow horizontal offset.",

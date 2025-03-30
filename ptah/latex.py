@@ -3,7 +3,7 @@
 import os
 import os.path
 import ptah
-from ptah import FontSize, Align
+from ptah import FontSize, Align, BorderStyle
 import ptah.font
 import ptah.format
 import ptah.props
@@ -57,13 +57,14 @@ FONT_SIZES = {
 
 
 
-BORDER_STYLES = [
-	"",
-	"",
-	"dotted",
-	"dashed",
-	"double"
-]
+BORDER_STYLES = {
+	BorderStyle.NONE:	"",
+	BorderStyle.SOLID:	"",
+	BorderStyle.DOTTED:	"dotted",
+	BorderStyle.DASHED:	"dashed",
+	BorderStyle.DOUBLE:	"double"
+}
+
 
 PROLOG = \
 """
@@ -289,23 +290,23 @@ class Drawer(graph.Drawer):
 				% (path, x, y, self.format.width, self.format.height));
 
 	def border_props(self, style):
-		if style.border_style == ptah.BORDER_NONE:
+		if style.border_style == ptah.BorderStyle.NONE:
 			return ""
 		else:
 			props = "draw=%s, inner sep = 0" \
 				% self.get_color(style.border_color)
-			if style.border_width == ptah.BORDER_MEDIUM:
+			if style.border_width == ptah.BorderWidth.MEDIUM:
 				props += ", thick"
-			elif style.border_width == ptah.BORDER_THICK:
+			elif style.border_width == ptah.BorderWidth.THICK:
 				props += ", ultra thick"
 			elif isinstance(style.border_width, graph.Length):
 				props += ",line width=%smm" % style.border_width.get(1.)
-			if style.border_style != ptah.BORDER_SOLID:
+			if style.border_style != ptah.BorderStyle.SOLID:
 				props += ",%s" % BORDER_STYLES[style.border_style]
 			return props
 
 	def shadow_props(self, style):
-		if style.shadow == ptah.SHADOW_SIMPLE:
+		if style.shadow == ptah.Shadow.SIMPLE:
 			print("simple")
 			opacity = style.shadow_opacity
 			if opacity == None:
@@ -316,7 +317,7 @@ class Drawer(graph.Drawer):
 				",shadow xshift=%smm" % style.shadow_xoffset + \
 				",shadow yshift=%smm" % (-style.shadow_yoffset) + \
 				"}"
-		elif style.shadow == ptah.SHADOW_FUZZY:
+		elif style.shadow == ptah.Shadow.FUZZY:
 			print("fuzzy")
 			opacity = style.shadow_opacity
 			if opacity == None:
@@ -335,13 +336,13 @@ class Drawer(graph.Drawer):
 			return ""
 
 	def draw_border(self, x, y, W, H, style):
-		if style.border_style != ptah.BORDER_NONE:
+		if style.border_style != ptah.BorderStyle.NONE:
 			self.out.write(
 				"\\draw[%s] (%smm,%smm) rectangle ++(%smm,%smm);\n" %
 				(self.border_props(style), x-W/2, y-H/2, W, H))
 
 	def draw_border_around(self, name, style):
-		if style.border_style != ptah.BORDER_NONE:
+		if style.border_style != ptah.BorderStyle.NONE:
 			self.out.write(
 				"\\draw[%s] (%s.north west) rectangle (%s.south east);\n" %
 				(self.border_props(style), name, name))
