@@ -26,15 +26,17 @@ class Mode(Enum):
 	FILL = 2
 	TILE = 3	# only for background
 
-ALIGN_CENTER = 0
-ALIGN_TOP = 1
-ALIGN_TOP_RIGHT = 2
-ALIGN_RIGHT = 3
-ALIGN_BOTTOM_RIGHT = 4
-ALIGN_BOTTOM = 5
-ALIGN_BOTTOM_LEFT = 6
-ALIGN_LEFT = 7
-ALIGN_TOP_LEFT = 8
+class Align(Enum):
+	"""Alignments."""
+	CENTER = 0
+	TOP = 1
+	TOP_RIGHT = 2
+	RIGHT = 3
+	BOTTOM_RIGHT = 4
+	BOTTOM = 5
+	BOTTOM_LEFT = 6
+	LEFT = 7
+	TOP_LEFT = 8
 
 class FontSize(Enum):
 	XX_SMALL = 0
@@ -97,9 +99,9 @@ MODE_PROP = Property(
 	default = Mode.FIT)
 ALIGN_PROP = Property(
 	"align",
-	"image alignment, one of " + ", ".join(ALIGNMENTS),
-	props.type_enum(ALIGNMENTS),
-	default = ALIGN_CENTER)
+	f"image alignment, one of {enum_list(Align)}",
+	props.type_penum(Align),
+	default = Align.CENTER)
 IMAGE_PROP = props.ImageProperty("image", "image", mode = PROP_REQ)
 NAME_PROP = props.StringProperty("name", "name")
 SCALE_PROP = Property(
@@ -117,7 +119,7 @@ VERTICAL_SHIFT_PROP = Property(
 	props.type_length)
 
 # text properties
-TEXT_ALIGN_PROP = props.EnumProperty("text-align", "Text alignment.", ALIGNMENTS)
+TEXT_ALIGN_PROP = Property("text-align", f"Text alignment among {enum_list(Align)}.", props.type_penum(Align))
 TEXT_PROP = props.StringProperty("text", "Page text.")
 FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_penum(FontSize))
 FONT_PROP = props.Property("font", "font name", props.type_font)
@@ -238,12 +240,12 @@ class Page(util.AttrMap, props.Container):
 		self.text_count = 0
 		if n == 1:
 			self.text = None
-			self.text_align = ALIGN_CENTER
+			self.text_align = Align.CENTER
 			self.font_size = FontSize.MEDIUM
 			self.font = None
 		else:
 			self.text = [None] * n
-			self.text_align =  [ALIGN_CENTER] * n
+			self.text_align =  [Align.CENTER] * n
 			self.font_size =  [FontSize.MEDIUM] * n
 			self.font = [None] * n
 

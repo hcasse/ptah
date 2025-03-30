@@ -3,7 +3,7 @@
 import os
 import os.path
 import ptah
-from ptah import FontSize
+from ptah import FontSize, Align
 import ptah.font
 import ptah.format
 import ptah.props
@@ -19,29 +19,31 @@ MINIATURE_HEIGHT = 40
 MINIATURE_BACK = "yellow!50!white"
 
 
-ALIGN = [
-	lambda w, h: ("", 0, 0),
-	lambda w, h: ("anchor = north", 0, h/2),
-	lambda w, h: ("anchor = north east", w/2, h/2),
-	lambda w, h: ("anchor = east", w/2, 0),
-	lambda w, h: ("anchor = south east", w/2, -h/2),
-	lambda w, h: ("anchor = south", 0, -h/2),
-	lambda w, h: ("anchor = south west", -w/2, -h/2),
-	lambda w, h: ("anchor = west", -w/2, 0),
-	lambda w, h: ("anchor = north west", -w/2, h/2)
-]
+ALIGN = {
+	Align.CENTER: 		lambda w, h: ("", 0, 0),
+	Align.TOP: 			lambda w, h: ("anchor = north", 0, h/2),
+	Align.TOP_RIGHT:	lambda w, h: ("anchor = north east", w/2, h/2),
+	Align.RIGHT: 		lambda w, h: ("anchor = east", w/2, 0),
+	Align.BOTTOM_RIGHT:	lambda w, h: ("anchor = south east", w/2, -h/2),
+	Align.BOTTOM: 		lambda w, h: ("anchor = south", 0, -h/2),
+	Align.BOTTOM_LEFT: 	lambda w, h: ("anchor = south west", -w/2, -h/2),
+	Align.LEFT: 		lambda w, h: ("anchor = west", -w/2, 0),
+	Align.TOP_LEFT: 	lambda w, h: ("anchor = north west", -w/2, h/2)
+}
 
-TEXT_ALIGN = [
-	"center",
-	"center",
-	"right",
-	"right",
-	"right",
-	"center",
-	"left",
-	"left",
-	"left"
-]
+
+TEXT_ALIGN = {
+	Align.CENTER: 		"center",
+	Align.TOP:			"center",
+	Align.TOP_RIGHT:	"right",
+	Align.RIGHT:		"right",
+	Align.BOTTOM_RIGHT:	"right",
+	Align.BOTTOM:		"center",
+	Align.BOTTOM_LEFT:	"left",
+	Align.LEFT:			"left",
+	Align.TOP_LEFT:		"left"
+}
+
 
 FONT_SIZES = {
 	FontSize.XX_SMALL: 	"\\tiny",

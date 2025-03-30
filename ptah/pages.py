@@ -220,9 +220,9 @@ class TitlePage(Page):
 		self.font_size[0] = ptah.FontSize.XX_LARGE
 		self.font_size[1] = ptah.FontSize.LARGE
 		self.font_size[2] = ptah.FontSize.LARGE
-		self.text_align[0] = ptah.ALIGN_BOTTOM
-		self.text_align[1] = ptah.ALIGN_CENTER
-		self.text_align[2] = ptah.ALIGN_CENTER
+		self.text_align[0] = ptah.Align.BOTTOM
+		self.text_align[1] = ptah.Align.CENTER
+		self.text_align[2] = ptah.Align.CENTER
 		self.other_height = 8
 		self.interspace = 5
 
