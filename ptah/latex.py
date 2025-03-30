@@ -255,20 +255,20 @@ class Drawer(graph.Drawer):
 		write = self.out.write
 		path = page.background_image
 
-		if page.background_mode == ptah.MODE_FIT:
+		if page.background_mode == ptah.Mode.FIT:
 			cx, cy = self.get_page_center()
 			write("\\node[overlay, inner sep=0] at(%smm, %smm) {"
 				% (cx, cy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}};"
 				% (self.format.width, self.format.height, path))
 
-		elif page.background_mode == ptah.MODE_STRETCH:
+		elif page.background_mode == ptah.Mode.STRETCH:
 			write("\\node[overlay, inner sep=0, anchor=north west] at(%smm, %smm) {"
 				% (-self.width/2-self.lmargin, self.height/2+self.tmargin))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}};\n"
 				% (self.format.width, self.format.height, path))
 
-		elif page.background_mode == ptah.MODE_FILL:
+		elif page.background_mode == ptah.Mode.FILL:
 			w, h = self.get_size(path)
 			W, H = self.format.width, self.format.height
 			# TODO manage align, scale, xshift, yshift
@@ -281,7 +281,7 @@ class Drawer(graph.Drawer):
 			write("\\includegraphics[%s, keepaspectratio]{%s}};"
 				% (param, path));
 
-		elif page.background_mode == ptah.MODE_TILE:
+		elif page.background_mode == ptah.Mode.TILE:
 			x, y = self.get_bottom_left()
 			write("\path[overlay, fill tile image=%s] (%smm, %smm) rectangle ++(%smm, %smm);\n"
 				% (path, x, y, self.format.width, self.format.height));
@@ -351,7 +351,7 @@ class Drawer(graph.Drawer):
 		shadow = self.shadow_props(style)
 
 		# draw the image
-		if style.mode == ptah.MODE_FIT:
+		if style.mode == ptah.Mode.FIT:
 			anchor,dx, dy = ALIGN[style.align](W, H)
 			write("\\node[%s%s,inner sep=0] at(%smm, %smm) (A) {" \
 				% (anchor, shadow, x + dx, y + dy))
@@ -360,14 +360,14 @@ class Drawer(graph.Drawer):
 			write("};\n")
 			self.draw_border_around("A", style)
 
-		elif style.mode == ptah.MODE_STRETCH:
+		elif style.mode == ptah.Mode.STRETCH:
 			write("\\node at(%smm, %smm) {" % (x, y))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}"
 				% (box.w, box.h, path));
 			write("};\n")
 			self.draw_border(x, y, W, H, style)
 
-		elif style.mode == ptah.MODE_FILL:
+		elif style.mode == ptah.Mode.FILL:
 
 			# compute configuration
 			w, h = self.get_size(path)

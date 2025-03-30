@@ -9,16 +9,22 @@ from ptah.props import Property
 from ptah import util
 from ptah.graph import Style
 
+def enum_list(cls):
+	"""Return a string representing the list of enumerated values."""
+	return ", ".join([util.normalize(x.name) for x in cls])
+
 # property management
 
 PROP_OK = 0
 PROP_REQ = 1
 PROP_INH = 2
 
-MODE_FIT = 0
-MODE_STRETCH = 1
-MODE_FILL = 2
-MODE_TILE = 3	# only for background
+class Mode(Enum):
+	"""Filling mode for an image."""
+	FIT = 0
+	STRETCH = 1
+	FILL = 2
+	TILE = 3	# only for background
 
 ALIGN_CENTER = 0
 ALIGN_TOP = 1
@@ -80,16 +86,15 @@ BACKGROUND_COLOR_PROP = props.ColorProperty(
 	"background-color", "Color for background.", mode = PROP_INH)
 BACKGROUND_IMAGE_PROP = props.ImageProperty(
 	"background-image", "background image", mode = PROP_INH)
-BACKGROUND_MODE_PROP = props.EnumProperty("background-mode",
-	"Background image mode.", [ "fit", "stretch", "fill", "tile" ])
+BACKGROUND_MODE_PROP = Property("background-mode",
+	"Background image mode.", props.type_penum(Mode))
 
 # image properties
-mode_list = [ "fit", "stretch", "fill" ]
 MODE_PROP = Property(
 	"mode",
-	"image mode, one of " + ", ".join(mode_list) + ".",
-	props.type_enum(mode_list),
-	default = MODE_FIT)
+	f"image mode, one of {enum_list(Mode)}.",
+	props.type_penum(Mode),
+	default = Mode.FIT)
 ALIGN_PROP = Property(
 	"align",
 	"image alignment, one of " + ", ".join(ALIGNMENTS),
@@ -220,7 +225,7 @@ class Page(util.AttrMap, props.Container):
 		"""Initialize the page properties."""
 		self.background_color = None
 		self.background_image = None
-		self.background_mode = MODE_STRETCH
+		self.background_mode = Mode.STRETCH
 
 	def init_image(self, n = 1):
 		"""Initialize the image count and their properties."""
