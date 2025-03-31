@@ -3,7 +3,7 @@
 import os
 import os.path
 import ptah
-from ptah import FontSize, Align, BorderStyle
+from ptah import FontSize, Align, BorderStyle, Album
 import ptah.font
 import ptah.format
 import ptah.props
@@ -541,7 +541,7 @@ class DocDrawer(Drawer):
 		write("\\paragraph{Properties}\n")
 		write("\\begin{description}\n")
 		write("\\setlength\\itemsep{-1mm}\n")
-		for prop in ptah.ALBUM_PROPS.values():
+		for prop in Album.PROPS.values():
 			write("\\item[%s:]" % prop.id)
 			self.write_text(prop.get_description())
 			write("\n")

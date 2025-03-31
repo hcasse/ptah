@@ -2,6 +2,7 @@
 
 from enum import Enum
 import os
+import os.path
 import yaml
 from ptah import format
 from ptah import props
@@ -306,6 +307,14 @@ def type_pages(self, pages, album):
 	return res
 
 
+def type_paths(self, paths, album):
+	"""Supports paths of the album."""
+	if not hasattr(paths, "__iter__") \
+	or not all([isinstance(x, str) for x in paths]):
+		raise CheckError("paths should a be a list of paths!")
+	return paths
+
+
 def type_format(self, fmt, album):
 	try:
 		return format.FORMATS[fmt.upper()]
@@ -313,18 +322,19 @@ def type_format(self, fmt, album):
 		raise util.CheckError(self, "format %s is unknown" % fmt)
 
 
-ALBUM_PROPS = props.make([
-	props.Property("format", "page format", type_format),
-	props.Property("pages", "list of pages", type_pages, mode = PROP_REQ),
-	props.StringProperty("title", "Album title."),
-	props.StringProperty("author", "Author name."),
-	props.StringProperty("date", "Edition date."),
-	BACKGROUND_COLOR_PROP,
-	BACKGROUND_IMAGE_PROP
-])
-
 class Album(util.AttrMap, props.Container):
 	"""The album itself, mainly an ordered collection of pages."""
+
+	PROPS = props.make([
+		props.Property("format", "page format", type_format),
+		props.Property("pages", "list of pages", type_pages, mode = PROP_REQ),
+		props.StringProperty("title", "Album title."),
+		props.StringProperty("author", "Author name."),
+		props.StringProperty("date", "Edition date."),
+		BACKGROUND_COLOR_PROP,
+		BACKGROUND_IMAGE_PROP,
+		props.Property("paths", "list of paths to find images", type_paths)
+	])
 
 	def __init__(self, path):
 		util.AttrMap.__init__(self)
@@ -339,6 +349,7 @@ class Album(util.AttrMap, props.Container):
 		self.date = None
 		self.background_color = None
 		self.background_image = None
+		self.paths = ['.']
 		for p in Page.IMAGE_PROPS:
 			p.init(self, 1, is_root = True)
 
@@ -351,16 +362,26 @@ class Album(util.AttrMap, props.Container):
 		self.pages.append(page)
 
 	def read(self, mon):
+		"""Read the album from the file."""
 		try:
 			with open(self.path) as file:
 				desc = yaml.safe_load(file)
-				util.parse_dict(desc, self, ALBUM_PROPS)
+				util.parse_dict(desc, self, self.PROPS)
 			return True
 		except yaml.YAMLError as e:
 			raise util.CheckError(str(e))
 
-
-
+	def find(self, file):
+		"""Look for a file in the execution paths.
+		Return None if the file cannot be found."""
+		if os.path.isabs(file):
+			return file
+		else:
+			for path in self.paths:
+				jpath = os.path.join(path, file)
+				if os.path.exists(jpath):
+					return jpath
+			return None
 
 
 """Map of page types."""
