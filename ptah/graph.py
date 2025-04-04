@@ -1,6 +1,73 @@
+#
+#	Ptah -- Photo album generator
+#	Copyright (C) 2022 Hugues Cassé <hug.casse@gmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+# 	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
 """Module managing graphics."""
 
-import ptah
+from enum import Enum
+
+class Mode(Enum):
+	"""Filling mode for an image."""
+	FIT = 0
+	STRETCH = 1
+	FILL = 2
+	TILE = 3	# only for background
+
+class Align(Enum):
+	"""Alignments."""
+	CENTER = 0
+	TOP = 1
+	TOP_RIGHT = 2
+	RIGHT = 3
+	BOTTOM_RIGHT = 4
+	BOTTOM = 5
+	BOTTOM_LEFT = 6
+	LEFT = 7
+	TOP_LEFT = 8
+
+class FontSize(Enum):
+	"""Enumeration of font sizes."""
+	XX_SMALL = 0
+	X_SMALL = 1
+	SMALL = 2
+	MEDIUM = 3
+	LARGE = 4
+	X_LARGE = 5
+	XX_LARGE = 6
+
+class BorderWidth(Enum):
+	"""Enumeration of symbolic border widths."""
+	THIN = 0
+	MEDIUM = 1
+	THICK = 2
+
+class BorderStyle(Enum):
+	"""Enumeration of border styles."""
+	NONE = 0
+	SOLID = 1
+	DOTTED = 2
+	DASHED = 3
+	DOUBLE = 4
+
+class Shadow(Enum):
+	"""Enumeration of shadow types."""
+	NONE = 0
+	SIMPLE = 1
+	FUZZY = 2
 
 class Length:
 	"""Represent a length - absolute in mm or proportional in %."""
@@ -100,14 +167,9 @@ class Style:
 class TextStyle:
 
 	def __init__(self, obj):
-		if i == None:
-			self.text_align = obj.get_prop()
-			self.font_size = obj.font_size
-			self.font = obj.font
-		else:
-			self.text_align = obj.text_align[i]
-			self.font_size = obj.font_size[i]
-			self.font = obj.font[i]
+		self.text_align = Align.CENTER
+		self.font_size = None
+		self.font = None
 
 
 class Drawer:

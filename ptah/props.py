@@ -3,7 +3,6 @@
 import os
 import re
 
-import ptah
 import ptah.font
 from ptah.util import CheckError, normalize
 from ptah import graph

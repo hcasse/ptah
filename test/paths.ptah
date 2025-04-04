@@ -1,0 +1,17 @@
+title: Font Test Album
+author: H. Cassé
+date: 24/01/2023
+format: a4
+background-color: white
+paths:
+  - photos
+  - .
+pages:
+
+  - name: normal
+    type: center
+    image: reed.jpeg
+
+  - name: normal
+    type: center
+    image: vulture.jpeg

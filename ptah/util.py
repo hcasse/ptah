@@ -91,11 +91,6 @@ def normalize(s):
 	"""Normalize s to lower case and remove spaces."""
 	return s.lower().replace(' ', '').replace('_', '-')
 
-class Console:
-	"""Console for user interaction."""
-	stderr = sys.stderr
-
-	def warn(self, msg):
-		self.stderr.write(f"WARNING: {msg}\n")
-
-CONSOLE = Console()
+def enum_list(cls):
+	"""Return a string representing the list of enumerated values."""
+	return ", ".join([normalize(x.name) for x in cls])

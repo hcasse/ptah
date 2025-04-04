@@ -6,14 +6,11 @@ import os.path
 import yaml
 from ptah import format
 from ptah import props
-from ptah.props import Property, Map, Container
+from ptah.props import Property, Map, Container, StringProperty
 from ptah import util
 from ptah.graph import Style, Box
 from ptah import io
-
-def enum_list(cls):
-	"""Return a string representing the list of enumerated values."""
-	return ", ".join([util.normalize(x.name) for x in cls])
+from ptah.gprops import *
 
 # property management
 
@@ -21,157 +18,8 @@ PROP_OK = 0
 PROP_REQ = 1
 PROP_INH = 2
 
-class Mode(Enum):
-	"""Filling mode for an image."""
-	FIT = 0
-	STRETCH = 1
-	FILL = 2
-	TILE = 3	# only for background
 
-class Align(Enum):
-	"""Alignments."""
-	CENTER = 0
-	TOP = 1
-	TOP_RIGHT = 2
-	RIGHT = 3
-	BOTTOM_RIGHT = 4
-	BOTTOM = 5
-	BOTTOM_LEFT = 6
-	LEFT = 7
-	TOP_LEFT = 8
-
-class FontSize(Enum):
-	"""Enumeration of font sizes."""
-	XX_SMALL = 0
-	X_SMALL = 1
-	SMALL = 2
-	MEDIUM = 3
-	LARGE = 4
-	X_LARGE = 5
-	XX_LARGE = 6
-
-class BorderWidth(Enum):
-	"""Enumeration of symbolic border widths."""
-	THIN = 0
-	MEDIUM = 1
-	THICK = 2
-
-border_width_type = props.type_union([
-	props.type_penum(BorderWidth),
-	props.type_length
-])
-
-class BorderStyle(Enum):
-	"""Enumeration of border styles."""
-	NONE = 0
-	SOLID = 1
-	DOTTED = 2
-	DASHED = 3
-	DOUBLE = 4
-border_style_type = props.type_penum(BorderStyle)
-
-class Shadow(Enum):
-	"""Enumeration of shadow types."""
-	NONE = 0
-	SIMPLE = 1
-	FUZZY = 2
-shadow_type = props.type_penum(Shadow)
-
-
-# background properties
-BACKGROUND_COLOR_PROP = props.ColorProperty(
-	"background-color", "Color for background.", mode = PROP_INH)
-BACKGROUND_IMAGE_PROP = props.ImageProperty(
-	"background-image", "background image", mode = PROP_INH)
-BACKGROUND_MODE_PROP = Property("background-mode",
-	"Background image mode.", props.type_penum(Mode))
-
-# image properties
-MODE_PROP = Property(
-	"mode",
-	f"image mode, one of {enum_list(Mode)}.",
-	props.type_penum(Mode),
-	default = Mode.FIT)
-ALIGN_PROP = Property(
-	"align",
-	f"image alignment, one of {enum_list(Align)}",
-	props.type_penum(Align),
-	default = Align.CENTER)
-IMAGE_PROP = props.ImageProperty("image", "image", mode = PROP_REQ)
-NAME_PROP = props.StringProperty("name", "name")
-SCALE_PROP = Property(
-	"scale",
-	"image scale.",
-	props.type_float,
-	default = 1.)
-HORIZONTAL_SHIFT_PROP = Property(
-	"horizontal-shift",
-	"shift in % of the image width.",
-	props.type_length)
-VERTICAL_SHIFT_PROP = Property(
-	"vertical-shift",
-	"shift in % of the image height.",
-	props.type_length)
-
-# text properties
-TEXT_ALIGN_PROP = Property("text-align", f"Text alignment among {enum_list(Align)}.", props.type_penum(Align))
-TEXT_PROP = props.StringProperty("text", "Page text.")
-FONT_SIZE_PROP = props.Property("font-size", "font size.", props.type_penum(FontSize))
-FONT_PROP = props.Property("font", "font name", props.type_font)
-
-# border properties
-BORDER_STYLE = props.Property(
-	"border-style",
-	"Style for the border.",
-	border_style_type,
-	default = BorderStyle.NONE
-)
-BORDER_COLOR = props.Property(
-	"border-color",
-	"Color for border of an image.",
-	props.type_color,
-	mode = PROP_INH,
-	default = "#000000",
-	implies = props.implies_set(BORDER_STYLE, BorderStyle.NONE, BorderStyle.SOLID))
-BORDER_WIDTH = props.Property(
-	"border-width",
-	f"width of border lines: length or one of {enum_list(BorderWidth)}.",
-	border_width_type,
-	mode = PROP_INH,
-	default = BorderWidth.MEDIUM,
-	implies = props.implies_set(BORDER_STYLE, BorderStyle.NONE, BorderStyle.SOLID))
-
-# shadow properties
-SHADOW_STYLE = props.Property(
-	"shadow",
-	f"select the shadow type among {enum_list(Shadow)}.",
-	shadow_type,
-	mode = PROP_INH,
-	default = Shadow.NONE)
-SHADOW_XOFFSET = props.Property(
-	"shadow-xoffset",
-	"shadow horizontal offset.",
-	props.type_length,
-	mode = PROP_INH,
-	default = 1.5)
-SHADOW_YOFFSET = props.Property(
-	"shadow-yoffset",
-	"shadow vertical offset.",
-	props.type_length,
-	mode = PROP_INH,
-	default = 1.5)
-SHADOW_COLOR = props.Property(
-	"shadow-color",
-	"shadow color.",
-	props.type_color,
-	mode = PROP_INH,
-	default = "#000000")
-SHADOW_OPACITY = props.Property(
-	"shadow-opacity",
-	"shadow opacity as percent value (100% opaque, 0% transparent).",
-	props.type_percent,
-	mode = PROP_INH)
-
+NAME_PROP = StringProperty("name", "name")
 
 class Frame(Map):
 	"""A frame inside a page with content."""
@@ -255,6 +103,11 @@ class Text(Frame):
 	def gen(self, drawer):
 		if self.text is not None:
 			drawer.draw_text(self.text, self.box, TextStyle(self))
+
+	def init_style(self, style):
+		style.text_align = self.get_prop(ALIGN_PROP, default=style.text_align)
+		style.font_size = self.get_prop(FONT_SIZE_PROP, default=style.font_size)
+		style.font = self.get_prop(FONT_PROP, default=style.font)
 
 
 class Page(Container):
