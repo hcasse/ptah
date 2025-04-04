@@ -5,7 +5,7 @@ import re
 
 import ptah
 import ptah.font
-from ptah.util import CheckError, CONSOLE, normalize
+from ptah.util import CheckError, normalize
 from ptah import graph
 
 def implies_def(obj, index):
@@ -59,7 +59,23 @@ class Property:
 		else:
 			obj.__dict__[self.pid][index] = val
 
-	def set_scalar(self, val, obj):
+	def resolve_old(self, obj, direct=False, required=False, default=None):
+		"""Resolve the value of a propertry. If direct is True, do not lookup
+		in parents. If required, raises an error if the property cannot be
+		found. Returns the value of the property or None if it cannot be found."""
+		val = obj.get_attr(self.id)
+		if val is not None:
+			return val
+		if not direct and obj.parent is not None:
+			val = self.resolve(obj.parent, direct, required)
+		if val is None:
+			if required:
+				raise CheckError(f"property {self.id} is required in {obj.name}")
+			else:
+				val = default
+		return val
+
+	def set_scalar_old(self, val, obj):
 		"""Parse the file value and set it, if valid, to the object
 		corresponding field. The default implementation performs
 		the assignment to the field without test. May raise
@@ -70,11 +86,11 @@ class Property:
 		obj.__dict__[self.pid] = self.parse(val, obj)
 		self.implies(obj, None)
 
-	def is_indexed(self):
+	def is_indexed_old(self):
 		"""Test if the property supports indexes."""
 		return self.multi
 
-	def set_indexed(self, i, val, obj):
+	def set_indexed_old(self, i, val, obj):
 		"""Same as parse() but with an array. In addition, may raise
 		CheckError if the index is too big."""
 		l = obj.__dict__[self.pid]
@@ -87,7 +103,7 @@ class Property:
 		l[i] = self.parse(val, obj)
 		self.implies(obj, i)
 
-	def lookup_parent(self, p):
+	def lookup_parent_old(self, p):
 		p = p.parent
 		while(p != None):
 			if p.__dict__[self.pid] != None:
@@ -95,17 +111,22 @@ class Property:
 			p = p.parent
 		return None
 
-	def init(self, obj, n, is_root = False):
+	def init_old(self, obj, n = 1, is_root = False):
 		"""Initialize a property in the given object in n instances."""
-		x = self.default
-		if self.mode == ptah.PROP_INH and not is_root:
-			x = None
-		if n == 1:
-			obj.__dict__[self.pid] = x
-		else:
-			obj.__dict__[self.pid] = [x] * n
+		obj.__dict__[self.pid] = None
+		#x = self.default
+		#if self.mode == ptah.PROP_INH and not is_root:
+		#	x = None
+		#if n == 1:
+		#	obj.__dict__[self.pid] = x
+		#else:
+		#	obj.__dict__[self.pid] = [x] * n
 
-	def check(self, obj):
+	def set_old(self, obj, val):
+		"""Set the value of a property."""
+		obj.__dict__[self.pid] = val
+
+	def check_old(self, obj):
 		"""Check if the property is correctly set in the object."""
 
 		# mode required
@@ -164,7 +185,7 @@ def type_string(self, val, obj):
 	return val
 
 def type_image(self, path, page):
-	if not os.path.exists(os.path.join(page.album.get_base(), path)):
+	if not os.path.exists(os.path.join(page.get_album().get_base(), path)):
 		raise CheckError("no image on path '%s' for %s" %
 			(path, page.name))
 	return path
@@ -287,14 +308,116 @@ def BoolProperty(id, desc, mode = 0):
 	return Property(id, desc, type_bool, mode)
 
 
-class Container:
+class Map:
+	"""Property map with a parent.."""
+
+	def __init__(self, parent = None):
+		self.props = {}
+		self.parent = parent
+		if parent is not None:
+			parent.add_item(self)
+
+	def get_location(self):
+		"""Get the location of the map."""
+		return "unknown"
+
+	def get_parent(self):
+		"""Get the parent containe of property."""
+		return self.parent
+
+	def get_props_map(self):
+		"""Get the map of supported properties."""
+		return {}
+
+	def set_prop(self, prop, val):
+		"""Add a property to the map."""
+		self.props[prop] = val
+
+	def get_prop(self, prop, required=False, direct=False, default=None):
+		"""Look for a property value. If the property is not found, returns
+		default value if not required, also raises an util.CheckError.
+		If direct is false, just look in the current map. Otherwise look also
+		in the parents."""
+		try:
+			return self.props[prop]
+		except KeyError:
+			if direct:
+				val = None
+			elif self.parent is not None:
+				val = self.parent.get_prop(prop)
+			else:
+				val = None
+			if val is not None:
+				return val
+			elif required:
+				raise CheckError(f"{prop.name} has to be defined in {self.get_location()}")
+			else:
+				return default
+
+	def parse_prop(self, key, val, mon):
+		"""Parse a single property."""
+		try:
+			prop = self.get_props_map()[key]
+			val = prop.parse(val, self)
+			self.set_prop(prop, val)
+		except KeyError:
+			mon.print_warning(f"no property {key} in {self.get_location()}. Ignoring it.")
+
+	def parse(self, data, mon):
+		"""Parse the given data, a dictionary of (key, value) and built
+		corresponding properties. All error displayed on monitor mon."""
+
+		for (key, val) in data.items():
+			p = key.find('#')
+
+			if p < 0:
+				self.parse_prop(key, val, mon)
+
+			else:
+				id = key[:p]
+				try:
+					i = int(key[p+1:]) - 1
+					item = self.get_item(i)
+					item.parse_prop(id, val, mon)
+				except ValueError:
+					mon.print_warning(f"bad number in {key} of {self.get_location()}. Ignoring it.")
+
+		# check the properties
+		self.check(mon)
+
+	def check(self, mon):
+		"""Function that may be called to perform additional check after parsing.
+		The default implementation does nothing. May raise a CheckError
+		if an error is found."""
+		pass
+
+
+class Container(Map):
 	"""Class that may contain sub-objects."""
 
 	def __init__(self, parent = None):
+		Map.__init__(self, parent)
 		self.parent = parent
+		self.content = []
 
-	def set_parent(self, parent):
-		self.parent = parent
+	def get_content(self):
+		return self.content
+
+	def get_item(self, i):
+		return self.content[i]
+
+	def add_item(self, item):
+		"""Add an item to the container and returns it."""
+		self.content.append(item)
+		return item
+
+	def remove_item(self, item):
+		"""Remove an item from the container."""
+		self.content.remove(item)
+
+	def check(self, mon):
+		for item in self.content:
+			item.check(mon)
 
 
 def make(*props):
@@ -309,7 +432,3 @@ def make(*props):
 		else:
 			map[prop.id] = prop
 	return map
-
-"""Known pages."""
-PAGE_MAP = {
-}

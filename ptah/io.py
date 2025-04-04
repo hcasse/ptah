@@ -65,7 +65,7 @@ BACK_WHITE = "\033[47m"
 # execution context
 #class NullStream:
 #	"""Stream that prints nothings."""
-#	
+#
 #	def write(self, line):
 #		pass
 
@@ -80,20 +80,20 @@ class Monitor:
 	verbose = False
 	flushed = False
 	action = None
-	
+
 	def handle_action(self):
 		"""Manage a pending action display."""
 		if self.action and not self.flushed:
 			sys.stderr.write("\n")
 			self.flushed = True
-	
+
 	def print_command(self, cmd):
 		"""Print a command before running it."""
 		if not self.quiet and self.command_ena:
 			self.handle_action()
 			sys.stderr.write(CYAN + "> " + str(cmd) + NORMAL + "\n")
 			sys.stderr.flush()
-	
+
 	def print_info(self, info):
 		"""Print information line about built target."""
 		if not self.quiet:
@@ -107,18 +107,18 @@ class Monitor:
 			self.handle_action()
 			sys.stderr.write(BOLD + RED + "ERROR: " + str(msg) + NORMAL + "\n")
 			sys.stderr.flush()
-	
+
 	def print_fatal(self, msg):
 		"""Print an error message."""
 		if not self.quiet:
 			sys.stderr.write(BOLD + RED + "ERROR: " + str(msg) + NORMAL + "\n")
 			sys.exit(1)
-	
+
 	def print_warning(self, msg):
 		"""Print a warning message."""
 		if not self.quiet:
 			self.handle_action()
-			sys.stderr.write(BOLD + YELLOW + "WARNING: " + str(msg) + NORMAL + "\n")
+			sys.stderr.write(f"{BOLD}{YELLOW}WARNING:{NORMAL} {msg}\n")
 			sys.stderr.flush()
 
 	def print_success(self, msg):
@@ -135,17 +135,17 @@ class Monitor:
 			sys.stderr.flush()
 			self.action = msg
 			self.flushed = False
-	
+
 	def print_final(self, msg):
 		if not self.quiet:
 			if self.flushed:
-				sys.stderr.write("%s ... " % self.action)				
+				sys.stderr.write("%s ... " % self.action)
 			sys.stderr.write(msg)
 			sys.stderr.write("\n");
 			sys.stderr.flush()
 			self.action = None
 			self.flushed = False
-	
+
 	def print_success(self, msg = ""):
 		"""End an action with success."""
 		if msg:
@@ -163,6 +163,6 @@ class Monitor:
 			self.handle_action()
 		sys.stdout.write(msg + "\n")
 		sys.stdout.flush()
-		
+
 
 DEF = Monitor()		# better to remove it at some point

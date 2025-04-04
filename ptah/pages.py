@@ -2,7 +2,7 @@
 
 import os
 import ptah
-from ptah import Page
+from ptah import Page, Text, Image
 from ptah import graph
 from ptah import util
 from ptah import props
@@ -21,38 +21,35 @@ def add(props, prop):
 class CenterPage(Page):
 
 	NAME = "center"
+	INSIDE_PROP = props.BoolProperty("inside", "insert text inside image.")
 	PROPS = props.make(
-		Page.PAGE_PROPS,
-		Page.TEXT_PROPS,
-		Page.IMAGE_PROPS,
-		props.BoolProperty("inside", "insert text inside image.")
+		Page.PROPS,
+		Text.PROPS,
+		Image.PROPS,
+		INSIDE_PROP
 	)
+	MAP = props.make(PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
-		self.init_image()
-		self.init_text()
+	def __init__(self, album):
+		Page.__init__(self, album)
 		self.inside = False
+		self.image = self.add_item(Image(self))
+		self.text = self.add_item(Text(self))
 
-	def get_props(self):
-		return CenterPage.PROPS
+	def get_props_map(self):
+		return self.MAP
 
-	def gen(self, drawer):
-		if self.text != None and self.inside == False:
+	def check(self, mon):
+		self.inside = self.get_prop(self.INSIDE_PROP, direct=True, default=self.inside)
+
+	def map(self, drawer):
+		if self.text.text is not None and self.inside == False:
 			h = drawer.height - 12
 		else:
 			h = drawer.height
-		drawer.draw_image(
-			self.image,
-			Box(0, 0, drawer.width, h),
-			Style(self)
-		)
-		if self.text != None:
-			drawer.draw_text(
-				self.text,
-				Box(0, drawer.height - 10, drawer.width, 10),
-				TextStyle(self)
-			)
+		self.image.map(Box(0, 0, drawer.width, h))
+		if self.text.text is not None:
+			self.text.map(Box(0, drawer.height - 10, drawer.width, 10))
 
 	def gen_miniature(drawer):
 		h = drawer.height - 5
@@ -65,18 +62,24 @@ class DuoPage(Page):
 
 	NAME = "duo"
 	PROPS = props.make(
-		Page.PAGE_PROPS,
-		Page.IMAGE_PROPS,
+		Page.PROPS,
+		Image.PROPS,
 		PROP_ORIENTATION
 	)
+	MAP = props.make(PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
-		self.init_image(2)
+	def __init__(self, album):
+		Page.__init__(self, album)
+		#self.init_image(2)
 		self.orientation = 0
+		self.image1 = self.add_item(Image(self))
+		self.image2 = self.add_item(Image(self))
 
-	def get_props(self):
-		return DuoPage.PROPS
+	def get_props_map(self):
+		return self.MAP
+
+	def check(self, mon):
+		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
 
 	def gen(self, drawer):
 		if self.orientation == 0:
@@ -93,21 +96,13 @@ class DuoPage(Page):
 			x2 = w + drawer.sep
 			y2 = 0
 			h = drawer.height
-		drawer.draw_image(
-			self.image[0],
-			Box(x1, y1, w, h),
-			Style(self, 0)
-		)
-		drawer.draw_image(
-			self.image[1],
-			Box(x2, y2, w, h),
-			Style(self, 1)
-		)
+		self.image1.map(Box(x1, y1, w, h))
+		self.image2.map(Box(x2, y2, w, h))
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.
-		drawer.draw_miniature_image("image0", Box(0, 0, drawer.width, h))
-		drawer.draw_miniature_image("image1", Box(0, h+2, drawer.width, h))
+		drawer.draw_miniature_image("image1", Box(0, 0, drawer.width, h))
+		drawer.draw_miniature_image("image2", Box(0, h+2, drawer.width, h))
 
 
 # Trio page
@@ -115,18 +110,24 @@ class TrioPage(Page):
 
 	NAME = "trio"
 	PROPS = props.make(
-		Page.PAGE_PROPS,
-		Page.IMAGE_PROPS,
+		Page.PROPS,
+		Image.PROPS,
 		PROP_ORIENTATION
 	)
+	MAP = props.make(PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
-		self.init_image(3)
+	def __init__(self, album):
+		Page.__init__(self, album)
+		self.image1 = self.add_item(Image(self))
+		self.image2 = self.add_item(Image(self))
+		self.image3 = self.add_item(Image(self))
 		self.orientation = 0
 
-	def get_props(self):
-		return TrioPage.PROPS
+	def get_props_map(self):
+		return self.MAP
+
+	def check(self, mon):
+		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
 
 	def gen(self, drawer):
 		x, y = [0] * 3, [0] * 3
@@ -140,12 +141,9 @@ class TrioPage(Page):
 			h = drawer.height
 			x[1] = w + drawer.sep
 			x[2] = 2*w + 2*drawer.sep
-
 		for i in range(0, 3):
-			drawer.draw_image(
-				self.image[i],
-				Box(x[i], y[i], w, h),
-				Style(self, i))
+			self.get_item(i).map(Box(x[i], y[i], w, h))
+			self.get_item(i).gen(drawer)
 
 	def gen_miniature(drawer):
 		w, h = drawer.width, (drawer.height - 4)/3.
@@ -160,25 +158,23 @@ class OnlyTextPage(Page):
 
 	NAME = "only-text"
 	PROPS = props.make(
-		Page.PAGE_PROPS,
-		Page.TEXT_PROPS
+		Page.PROPS,
+		Text.PROPS
 	)
+	MAP = props.make(PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
-		self.init_text()
+	def __init__(self, album):
+		Page.__init__(self, album)
 		self.pad = graph.AbsLength(10)
+		self.text = self.add_item(Text(self))
 
-	def get_props(self):
-		return OnlyTextPage.PROPS
+	def get_props_map(self):
+		return self.MAP
 
 	def gen(self, drawer):
 		pad = self.pad.get(min(drawer.width, drawer.height))
-		drawer.draw_text(
-			self.text,
-			Box(pad, pad, drawer.width - 2*pad, drawer.height - 2*pad),
-			TextStyle(self)
-		)
+		self.text.map(Box(pad, pad, drawer.width - 2*pad, drawer.height - 2*pad))
+		self.text.gen(drawer)
 
 	def gen_miniature(drawer):
 		drawer.draw_miniature_text("text",
@@ -190,67 +186,50 @@ class OnlyTextPage(Page):
 class BlankPage(Page):
 
 	NAME = "blank"
-	PROPS = props.make(Page.PAGE_PROPS)
+	MAP = props.make(Page.PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
+	def __init__(self, album):
+		Page.__init__(self, album)
 
-	def get_props(self):
-		return BlankPage.PROPS
-
-	def gen(self, drawer):
-		pass
-
-	def gen_miniature(drawer):
-		pass
+	def get_props_map(self):
+		return self.MAP
 
 
 # Title page
 class TitlePage(Page):
 
 	NAME = "title"
-	PROPS = props.make(Page.PAGE_PROPS, Page.TEXT_PROPS)
+	MAP = props.make(Page.PROPS, Text.PROPS)
 
-	def __init__(self):
-		Page.__init__(self)
-		self.init_text(3)
+	def __init__(self, album):
+		Page.__init__(self, album)
 		self.title_left = .15
 		self.title_right = .15
 		self.title_bot = .4
-		self.font_size[0] = ptah.FontSize.XX_LARGE
-		self.font_size[1] = ptah.FontSize.LARGE
-		self.font_size[2] = ptah.FontSize.LARGE
-		self.text_align[0] = ptah.Align.BOTTOM
-		self.text_align[1] = ptah.Align.CENTER
-		self.text_align[2] = ptah.Align.CENTER
+		self.title = self.add_item(Text(self))
+		self.date = self.add_item(Text(self))
+		self.author = self.add_item(Text(self))
 		self.other_height = 8
 		self.interspace = 5
 
-	def get_props(self):
-		#print("DEBUG:", TitlePage.PROPS)
-		return TitlePage.PROPS
+	def get_props_map(self):
+		return self.MAP
 
 	def gen(self, drawer):
 		x = drawer.width * self.title_left
 		w = drawer.width - x - drawer.width * self.title_right
 		h = drawer.height * self.title_bot
 		y = 0
-		drawer.draw_text(self.album.title,
-				Box(x, y, w, h),
-				graph.TextStyle(self, 0)
-			)
+		self.title.map(Box(x, y, w, h))
+		self.title.gen(drawer)
 		y += h + self.interspace
-		if self.album.date != None:
-			drawer.draw_text(self.album.date,
-				Box(x, y, w, self.other_height),
-				graph.TextStyle(self, 1)
-			)
+		if self.get_album().date != None:
+			self.date.map(Box(x, y, w, self.other_height))
+			self.date.gen(drawer)
 			y += self.other_height + self.interspace
-		if self.album.author != None:
-			drawer.draw_text(self.album.author,
-				Box(x, y, w, self.other_height),
-				graph.TextStyle(self, 2)
-			)
+		if self.get_album().author != None:
+			self.author.map(Box(x, y, w, self.other_height))
+			self.author.gen(drawer)
 
 	def gen_miniature(drawer):
 		ht = drawer.height / 4
@@ -266,6 +245,8 @@ class TitlePage(Page):
 
 
 # Page initialization
+
+"""Known pages."""
 def add(cls):
 	ptah.PAGE_MAP[cls.NAME] = cls
 add(TitlePage)

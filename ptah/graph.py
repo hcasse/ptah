@@ -99,9 +99,9 @@ class Style:
 
 class TextStyle:
 
-	def __init__(self, obj, i = None):
+	def __init__(self, obj):
 		if i == None:
-			self.text_align = obj.text_align
+			self.text_align = obj.get_prop()
 			self.font_size = obj.font_size
 			self.font = obj.font
 		else:

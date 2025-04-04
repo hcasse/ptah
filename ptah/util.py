@@ -21,21 +21,21 @@ class CheckError(Exception):
 		return self.msg
 
 
-class AttrMap:
+class AttrMapOld:			# to remove
 	"""A map of attributes."""
 
-	def __init__(self):
-		self.map = {}
+	def __init__(self, parent=None):
+		self.parent = parent
+		self.attrs = {}
 
 	def set_attr(self, name, val):
 		"""Set the value of an attribute."""
-		self.map[name] = val
+		self.attrs[name] = val
 
 	def get_attr(self, name):
-		"""Get the value of an attribute.
-		Return None if not found."""
+		"""Get the value of an attribute. Return None if not found."""
 		try:
-			return self.map[name]
+			return self.attrs[name]
 		except KeyError:
 			return None
 
@@ -44,12 +44,25 @@ class AttrMap:
 		if something is wrong."""
 		pass
 
-def parse_dict(data, base, props):
+	def get_props_map(self):
+		"""Get the map of supported properties."""
+		return {}
+
+
+def parse_dict_old(data, base, props, mon):		# to remove
 	"""Parse the given data, that is a dictionary, and call functions
 	proprties, a map made (key, fun) according to the key found in data.
-	The function has to take 2 parameters (value, base). The base mus
+	The function has to take 2 parameters (value, base). The base must
 	inherit from AttrMap and are assigned for any key of data not found
 	in props. Call check() on base in the end."""
+
+	def parse_val(key, val, base):
+		try:
+			prop = props[key]
+			val = prop.parse(val, base)
+			base.set_attr(prop.name, val)
+		except KeyError:
+			mon.print_warning(f"no property {key} in {base}. Ignoring it.")
 
 	# pick the properties
 	for (key, val) in data.items():
@@ -58,33 +71,17 @@ def parse_dict(data, base, props):
 
 		# single value
 		if p < 0:
-			try:
-				p = props[key]
-			except KeyError:
-				p = None
-			if p != None:
-				try:
-					p.set_scalar(val, base)
-				except ValueError:
-					raise CheckError("bad index %s" % key)
+			parse_val(key, val, base)
 
 		# multiple value
 		else:
 			id = key[:p]
 			try:
 				i = int(key[p+1:]) - 1
+				item = base.get_item(i)
+				parse_val(id, val, item)
 			except ValueError:
-				raise CheckError("bad index %s" % key)
-			try:
-				p = props[id]
-			except KeyError:
-				p = None
-			if p != None:
-				p.set_indexed(i, val, base)
-
-		# no property found?
-		if p == None:
-			base.set_attr(key, data[key])
+				mon.print_warning(f"bad number in {key} of {base}. Ignoring it.")
 
 	# check the properties
 	for prop in props.values():

@@ -85,7 +85,7 @@ def main(mon = io.DEF):
 			try:
 				album = Album(path)
 				album.read(mon)
-				latex.Drawer(album).gen()
+				#latex.Drawer(album).gen()
 			except util.CheckError as e:
 				mon.print_error(str(e))
 

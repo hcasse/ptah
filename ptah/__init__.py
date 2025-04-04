@@ -6,9 +6,10 @@ import os.path
 import yaml
 from ptah import format
 from ptah import props
-from ptah.props import Property
+from ptah.props import Property, Map, Container
 from ptah import util
-from ptah.graph import Style
+from ptah.graph import Style, Box
+from ptah import io
 
 def enum_list(cls):
 	"""Return a string representing the list of enumerated values."""
@@ -171,17 +172,37 @@ SHADOW_OPACITY = props.Property(
 	props.type_percent,
 	mode = PROP_INH)
 
-class Page(util.AttrMap, props.Container):
-	"""A page in the created album."""
 
-	PAGE_PROPS = [
-		NAME_PROP,
-		BACKGROUND_COLOR_PROP,
-		BACKGROUND_IMAGE_PROP,
-		BACKGROUND_MODE_PROP
-	]
+class Frame(Map):
+	"""A frame inside a page with content."""
 
-	IMAGE_PROPS = [
+	def __init__(self, page):
+		Map.__init__(self, page)
+		self.box = None
+
+	def get_album(self):
+		return self.get_page().get_album()
+
+	def get_page(self):
+		"""Get the page containing the frame."""
+		return self.parent
+
+	def get_props_map(self):
+		return self.MAP
+
+	def map(self, box):
+		"""Map the frame."""
+		self.box = box
+
+	def gen(self, drawer):
+		"""Generate the frame on the drawer."""
+		pass
+
+
+class Image(Frame):
+	"""Frame displaying an image."""
+
+	PROPS = [
 		MODE_PROP,
 		IMAGE_PROP,
 		SCALE_PROP,
@@ -197,64 +218,88 @@ class Page(util.AttrMap, props.Container):
 		SHADOW_OPACITY,
 		SHADOW_COLOR
 	]
+	MAP = props.make(PROPS)
 
-	TEXT_PROPS = [
+	def __init__(self, page, required=True):
+		Frame.__init__(self, page)
+		self.image = None
+		self.required = required
+
+	def check(self, mon):
+		self.image = IMAGE_PROP.resolve(self, direct=True, required=self.required)
+
+	def gen(self, drawer):
+		if self.image is not None:
+			drawer.draw_image(self.image, self.box, Style(self))
+
+
+class Text(Frame):
+	"""Frame displaying a text."""
+
+	PROPS = [
 		TEXT_PROP,
 		TEXT_ALIGN_PROP,
 		FONT_SIZE_PROP,
 		FONT_PROP
 	]
+	MAPS = props.make(PROPS)
+
+	def __init__(self, page, required=False):
+		Frame.__init__(self, page)
+		self.text = None
+		self.required = required
+
+	def check(self, mon):
+		self.text = self.get_prop(TEXT_PROP, direct=True, required=self.required)
+
+	def gen(self, drawer):
+		if self.text is not None:
+			drawer.draw_text(self.text, self.box, TextStyle(self))
+
+
+class Page(Container):
+	"""A page in the created album."""
+
+	PROPS = [
+		NAME_PROP,
+		BACKGROUND_COLOR_PROP,
+		BACKGROUND_IMAGE_PROP,
+		BACKGROUND_MODE_PROP,
+		Property("type", "Type of page.", lambda prop, val, obj: None)
+	]
 
 	NAME = ""
-	PROPS = props.make(PAGE_PROPS)
+	MAP = props.make(PROPS)
 
-	def __init__(self):
-		util.AttrMap.__init__(self)
-		props.Container.__init__(self)
+	def __init__(self, album):
+		Container.__init__(self, album)
+		self.name = "<no name>"
 		self.number = None
-		self.name = ""
-		self.init_page()
 		self.image_count = 0
 		self.text_count = 0
 
-	def init_page(self):
-		"""Initialize the page properties."""
-		self.background_color = None
-		self.background_image = None
-		self.background_mode = Mode.STRETCH
+	def get_location(self):
+		return f"{self.name}:{self.number}"
 
-	def init_image(self, n = 1):
-		"""Initialize the image count and their properties."""
-		self.image_count = n
-		for p in Page.IMAGE_PROPS:
-			p.init(self, n)
+	def get_album(self):
+		"""Get the album containing the page."""
+		return self.parent
 
-	def init_text(self, n  = 1):
-		"""Initialize the text count and their properties."""
-		self.text_count = 0
-		if n == 1:
-			self.text = None
-			self.text_align = Align.CENTER
-			self.font_size = FontSize.MEDIUM
-			self.font = None
-		else:
-			self.text = [None] * n
-			self.text_align =  [Align.CENTER] * n
-			self.font_size =  [FontSize.MEDIUM] * n
-			self.font = [None] * n
+	def get_props_map(self):
+		return self.MAP
 
-	def check(self):
-		"""Function called to check the attributes when the page is loaded.
-		Raise CheckError if there is an error."""
+	def map(self, drawer):
+		"""Map the frames inside the page with actual size of the page."""
 		pass
 
 	def gen(self, drawer):
 		"""Generate the page on the given output file."""
-		pass
+		for frame in self.content:
+			self.gen(drawer)
 
 	def get_props(self):
 		"""Get properties for reading the page description."""
-		return {}
+		return self.props
 
 	def get_packages(self):
 		"""Get the packages used by this page."""
@@ -293,16 +338,14 @@ def type_pages(self, pages, album):
 
 		# make the page
 		try:
-			page = PAGE_MAP[type]()
+			page = PAGE_MAP[type](album)
 		except KeyError:
-			raise util.CheckError("page type %s is unknown!" % type)
+			raise util.CheckError(f"page type {type} is unknown!")
 
 		# initialize the page
-		page.album = album
-		page.set_parent(album)
 		page.number = len(res)
 		res.append(page)
-		util.parse_dict(desc, page, page.get_props())
+		page.parse(desc, io.DEF)
 
 	return res
 
@@ -322,7 +365,7 @@ def type_format(self, fmt, album):
 		raise util.CheckError(self, "format %s is unknown" % fmt)
 
 
-class Album(util.AttrMap, props.Container):
+class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
 
 	PROPS = props.make([
@@ -335,14 +378,14 @@ class Album(util.AttrMap, props.Container):
 		BACKGROUND_IMAGE_PROP,
 		props.Property("paths", "list of paths to find images", type_paths)
 	])
+	MAP = props.make(PROPS)
 
 	def __init__(self, path):
-		util.AttrMap.__init__(self)
-		props.Container.__init__(self)
-		self.name = "album"
+		Container.__init__(self)
 		self.path = path
 		self.pages = None
 		self.base = os.path.dirname(path)
+		self.name = os.path.basename(path)
 		self.format = format.A4
 		self.title = "no title"
 		self.author = None
@@ -350,8 +393,14 @@ class Album(util.AttrMap, props.Container):
 		self.background_color = None
 		self.background_image = None
 		self.paths = ['.']
-		for p in Page.IMAGE_PROPS:
-			p.init(self, 1, is_root = True)
+		#for p in Image.PROPS:
+		#	p.init(self, 1, is_root = True)
+
+	def get_location(self):
+		return f"album {self.name}"
+
+	def get_props_map(self):
+		return self.MAP
 
 	def get_base(self):
 		return self.base
@@ -366,7 +415,7 @@ class Album(util.AttrMap, props.Container):
 		try:
 			with open(self.path) as file:
 				desc = yaml.safe_load(file)
-				util.parse_dict(desc, self, self.PROPS)
+				self.parse(desc, mon)
 			return True
 		except yaml.YAMLError as e:
 			raise util.CheckError(str(e))
@@ -383,6 +432,5 @@ class Album(util.AttrMap, props.Container):
 					return jpath
 			return None
 
-
-"""Map of page types."""
-PAGE_MAP = {}
+PAGE_MAP = {
+}
