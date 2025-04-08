@@ -155,21 +155,37 @@ class Box:
 
 class Style:
 
-	def __init__(self, obj, i = None):
-		if i == None:
-			for p in ptah.Page.IMAGE_PROPS:
-				self.__dict__[p.pid] = obj.__dict__[p.pid]
-		else:
-			for p in ptah.Page.IMAGE_PROPS:
-				self.__dict__[p.pid] = obj.__dict__[p.pid][i]
+	def __init__(self):
+		self.mode = Mode.FIT
+		self.scale = 1.
+		self.align = Align.CENTER
+		self.horizontal_shift = AbsLength(0)
+		self.vertical_shift = AbsLength(0)
+		self.border_style = BorderStyle.NONE
+		self.border_width = BorderStyle.SOLID
+		self.border_color = "#000000"
+		self.shadow = Shadow.NONE
+		self.shadow_xoffset = 1.5
+		self.shadow_yoffset = 1.5
+		self.shadow_color = "#000000"
+		self.shadow_opacity = 1.
 
 
 class TextStyle:
 
-	def __init__(self, obj):
+	def __init__(self):
 		self.text_align = Align.CENTER
-		self.font_size = None
+		self.font_size = FontSize.MEDIUM
 		self.font = None
+
+
+class PageStyle:
+	"""Style for a page."""
+
+	def __init__(self):
+		self.background_color = None
+		self.background_image = None
+		self.background_mode = Mode.FIT
 
 
 class Drawer:

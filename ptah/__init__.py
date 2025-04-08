@@ -24,9 +24,17 @@ NAME_PROP = StringProperty("name", "name")
 class Frame(Map):
 	"""A frame inside a page with content."""
 
-	def __init__(self, page):
+	def __init__(self, page, name=None):
 		Map.__init__(self, page)
 		self.box = None
+		self.initialized = False
+		if name is None:
+			self.name = "no name"
+		else:
+			self.name = name
+
+	def get_location(self):
+		return f"{self.name} in {self.get_parent().get_location()}"
 
 	def get_album(self):
 		return self.get_page().get_album()
@@ -46,13 +54,22 @@ class Frame(Map):
 		"""Generate the frame on the drawer."""
 		pass
 
+	def declare(self, drawer):
+		"""Called to declare resources used by the frame.
+		Default implementation performs property initialization
+		with self.STYLE_PROPS."""
+		self.init()
 
-class Image(Frame):
+	def init(self):
+		if not self.initialized:
+			self.initialized = True
+			self.init_props(self.STYLE_PROPS)
+
+class Image(Frame, graph.Style):
 	"""Frame displaying an image."""
 
-	PROPS = [
+	STYLE_PROPS = [
 		MODE_PROP,
-		IMAGE_PROP,
 		SCALE_PROP,
 		ALIGN_PROP,
 		HORIZONTAL_SHIFT_PROP,
@@ -66,73 +83,82 @@ class Image(Frame):
 		SHADOW_OPACITY,
 		SHADOW_COLOR
 	]
+	PROPS = [IMAGE_PROP] + STYLE_PROPS
 	MAP = props.make(PROPS)
 
-	def __init__(self, page, required=True):
-		Frame.__init__(self, page)
+	def __init__(self, page, required=True, name=None):
+		Frame.__init__(self, page, name=name)
+		graph.Style.__init__(self)
 		self.image = None
 		self.required = required
 
 	def check(self, mon):
-		self.image = IMAGE_PROP.resolve(self, direct=True, required=self.required)
+		self.image = self.get_prop(IMAGE_PROP, direct=True, required=self.required)
 
 	def gen(self, drawer):
 		if self.image is not None:
-			drawer.draw_image(self.image, self.box, Style(self))
+			drawer.draw_image(self.image, self.box, self)
+
+	def declare(self, drawer):
+		self.init()
+		if self.border_style != BorderStyle.NONE:
+			if self.border_color is not None:
+				drawer.declare_color(self.border_color)
+		if self.shadow != Shadow.NONE:
+			if self.shadow_color is not None:
+				drawer.declare_color(self.shadow_color)
 
 
-class Text(Frame):
+class Text(Frame, graph.TextStyle):
 	"""Frame displaying a text."""
 
-	PROPS = [
-		TEXT_PROP,
+	STYLE_PROPS = [
 		TEXT_ALIGN_PROP,
 		FONT_SIZE_PROP,
 		FONT_PROP
 	]
-	MAPS = props.make(PROPS)
+	PROPS = [ TEXT_PROP ] + STYLE_PROPS
+	MAP = props.make(PROPS)
 
-	def __init__(self, page, required=False):
-		Frame.__init__(self, page)
+	def __init__(self, page, required=False, name=None):
+		Frame.__init__(self, page, name=name)
+		graph.TextStyle.__init__(self)
 		self.text = None
 		self.required = required
 
 	def check(self, mon):
 		self.text = self.get_prop(TEXT_PROP, direct=True, required=self.required)
+		self.init_props(self.STYLE_PROPS)
 
 	def gen(self, drawer):
 		if self.text is not None:
-			drawer.draw_text(self.text, self.box, TextStyle(self))
-
-	def init_style(self, style):
-		style.text_align = self.get_prop(ALIGN_PROP, default=style.text_align)
-		style.font_size = self.get_prop(FONT_SIZE_PROP, default=style.font_size)
-		style.font = self.get_prop(FONT_PROP, default=style.font)
+			drawer.draw_text(self.text, self.box, self)
 
 
-class Page(Container):
+class Page(Container, graph.PageStyle):
 	"""A page in the created album."""
 
-	PROPS = [
-		NAME_PROP,
+	STYLE_PROPS = [
 		BACKGROUND_COLOR_PROP,
 		BACKGROUND_IMAGE_PROP,
 		BACKGROUND_MODE_PROP,
-		Property("type", "Type of page.", lambda prop, val, obj: None)
 	]
+	PROPS = [
+		NAME_PROP,
+		Property("type", "Type of page.", lambda prop, val, obj: None)
+	] + STYLE_PROPS
 
 	NAME = ""
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
 		Container.__init__(self, album)
+		graph.PageStyle.__init__(self)
 		self.name = "<no name>"
 		self.number = None
-		self.image_count = 0
-		self.text_count = 0
 
 	def get_location(self):
-		return f"{self.name}:{self.number}"
+		return f"{self.name}:{self.number + 1}"
 
 	def get_album(self):
 		"""Get the album containing the page."""
@@ -147,8 +173,10 @@ class Page(Container):
 
 	def gen(self, drawer):
 		"""Generate the page on the given output file."""
+		self.map(drawer)
 		for frame in self.content:
-			self.gen(drawer)
+			frame.gen(drawer)
+		pass
 
 	def get_props(self):
 		"""Get properties for reading the page description."""
@@ -167,14 +195,14 @@ class Page(Container):
 		"""Called to declare usd resource in the declaration phase."""
 		if self.background_color != None:
 			drawer.declare_color(self.background_color)
-		if self.image_count == 1:
-			drawer.declare_color(self.border_color)
-			drawer.declare_color(self.shadow_color)
-		elif self.image_count > 1:
-			for c in self.border_color:
-				drawer.declare_color(c)
-			for c in self.shadow_color:
-				drawer.declare_color(c)
+		for frame in self.content:
+			frame.declare(drawer)
+
+	def check(self, mon):
+		self.name = self.get_prop(NAME_PROP, default=self.name, direct=True)
+		self.init_props(self.STYLE_PROPS)
+		for frame in self.get_content():
+			frame.check(mon)
 
 
 def type_pages(self, pages, album):
@@ -197,6 +225,10 @@ def type_pages(self, pages, album):
 
 		# initialize the page
 		page.number = len(res)
+		try:
+			page.name = desc["name"]
+		except KeyError:
+			pass
 		res.append(page)
 		page.parse(desc, io.DEF)
 
@@ -221,15 +253,21 @@ def type_format(self, fmt, album):
 class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
 
+	FORMAT_PROP = props.Property("format", "page format", type_format)
+	PAGES_PROP = props.Property("pages", "list of pages", type_pages)
+	TITLE_PROP = props.StringProperty("title", "Album title.")
+	AUTHOR_PROP = props.StringProperty("author", "Author name.")
+	DATE_PROP = props.StringProperty("date", "Edition date.")
+	PATHS_PROP = props.Property("paths", "list of paths to find images", type_paths)
 	PROPS = props.make([
-		props.Property("format", "page format", type_format),
-		props.Property("pages", "list of pages", type_pages, mode = PROP_REQ),
-		props.StringProperty("title", "Album title."),
-		props.StringProperty("author", "Author name."),
-		props.StringProperty("date", "Edition date."),
+		FORMAT_PROP,
+		PAGES_PROP,
+		TITLE_PROP,
+		AUTHOR_PROP,
+		DATE_PROP,
 		BACKGROUND_COLOR_PROP,
 		BACKGROUND_IMAGE_PROP,
-		props.Property("paths", "list of paths to find images", type_paths)
+		PATHS_PROP
 	])
 	MAP = props.make(PROPS)
 
@@ -240,14 +278,12 @@ class Album(Container):
 		self.base = os.path.dirname(path)
 		self.name = os.path.basename(path)
 		self.format = format.A4
-		self.title = "no title"
+		self.title = None
 		self.author = None
 		self.date = None
 		self.background_color = None
 		self.background_image = None
-		self.paths = ['.']
-		#for p in Image.PROPS:
-		#	p.init(self, 1, is_root = True)
+		self.paths = None
 
 	def get_location(self):
 		return f"album {self.name}"
@@ -258,10 +294,22 @@ class Album(Container):
 	def get_base(self):
 		return self.base
 
-	def add_page(self, page):
-		page.album = self
-		page.number = len(self.pages)
-		self.pages.append(page)
+	def get_title(self):
+		if self.title is None:
+			self.title = self.get_prop(self.TITLE_PROP)
+			if self.title is None:
+				self.title = self.name.splitext()[0]
+		return self.title
+
+	def get_author(self):
+		if self.author is None:
+			self.author = self.get_prop(self.AUTHOR_PROP)
+		return self.author
+
+	def get_date(self):
+		if self.date is None:
+			self.date = self.get_prop(self.DATE_PROP)
+		return self.date
 
 	def read(self, mon):
 		"""Read the album from the file."""
@@ -269,9 +317,15 @@ class Album(Container):
 			with open(self.path) as file:
 				desc = yaml.safe_load(file)
 				self.parse(desc, mon)
-			return True
 		except yaml.YAMLError as e:
 			raise util.CheckError(str(e))
+
+	def check(self, mon):
+		self.pages = self.get_prop(self.PAGES_PROP, direct=True, required=True)
+		self.format = self.get_prop(self.FORMAT_PROP, default=self.format, direct=True)
+		self.title = self.get_prop(self.TITLE_PROP, default=self.title, direct=True)
+		self.author = self.get_prop(self.AUTHOR_PROP, default=self.author, direct=True)
+		self.date = self.get_prop(self.DATE_PROP, default=self.date, direct=True)
 
 	def find(self, file):
 		"""Look for a file in the execution paths.

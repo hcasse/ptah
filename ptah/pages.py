@@ -33,13 +33,16 @@ class CenterPage(Page):
 	def __init__(self, album):
 		Page.__init__(self, album)
 		self.inside = False
-		self.image = self.add_item(Image(self))
-		self.text = self.add_item(Text(self))
+		self.image = Image(self)
+		self.text = Text(self)
 
 	def get_props_map(self):
 		return self.MAP
 
 	def check(self, mon):
+		self.copy_props(self.image, Image.PROPS)
+		self.copy_props(self.text, Text.PROPS)
+		Page.check(self, mon)
 		self.inside = self.get_prop(self.INSIDE_PROP, direct=True, default=self.inside)
 
 	def map(self, drawer):
@@ -70,15 +73,15 @@ class DuoPage(Page):
 
 	def __init__(self, album):
 		Page.__init__(self, album)
-		#self.init_image(2)
 		self.orientation = 0
-		self.image1 = self.add_item(Image(self))
-		self.image2 = self.add_item(Image(self))
+		self.image1 = Image(self, name="image1")
+		self.image2 = Image(self, name="image2")
 
 	def get_props_map(self):
 		return self.MAP
 
 	def check(self, mon):
+		Page.check(self, mon)
 		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
 
 	def gen(self, drawer):
@@ -98,6 +101,8 @@ class DuoPage(Page):
 			h = drawer.height
 		self.image1.map(Box(x1, y1, w, h))
 		self.image2.map(Box(x2, y2, w, h))
+		self.image1.gen(drawer)
+		self.image2.gen(drawer)
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.
@@ -118,9 +123,9 @@ class TrioPage(Page):
 
 	def __init__(self, album):
 		Page.__init__(self, album)
-		self.image1 = self.add_item(Image(self))
-		self.image2 = self.add_item(Image(self))
-		self.image3 = self.add_item(Image(self))
+		self.image1 = Image(self)
+		self.image2 = Image(self)
+		self.image3 = Image(self)
 		self.orientation = 0
 
 	def get_props_map(self):
@@ -166,7 +171,7 @@ class OnlyTextPage(Page):
 	def __init__(self, album):
 		Page.__init__(self, album)
 		self.pad = graph.AbsLength(10)
-		self.text = self.add_item(Text(self))
+		self.text = Text(self)
 
 	def get_props_map(self):
 		return self.MAP
@@ -206,14 +211,23 @@ class TitlePage(Page):
 		self.title_left = .15
 		self.title_right = .15
 		self.title_bot = .4
-		self.title = self.add_item(Text(self))
-		self.date = self.add_item(Text(self))
-		self.author = self.add_item(Text(self))
+		self.title = Text(self)
+		self.date = Text(self)
+		self.author = Text(self)
 		self.other_height = 8
 		self.interspace = 5
 
 	def get_props_map(self):
 		return self.MAP
+
+	def check(self, mon):
+		Page.check(self, mon)
+		if self.title.text is None:
+			self.title.text = self.get_album().get_title()
+		if self.author.text is None:
+			self.author.text = self.get_album().get_author()
+		if self.date.text is None:
+			self.date.text = self.get_album().get_date()
 
 	def gen(self, drawer):
 		x = drawer.width * self.title_left

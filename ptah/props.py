@@ -2,6 +2,8 @@
 
 import os
 import re
+import sys
+import traceback
 
 import ptah.font
 from ptah.util import CheckError, normalize
@@ -349,7 +351,8 @@ class Map:
 			if val is not None:
 				return val
 			elif required:
-				raise CheckError(f"{prop.name} has to be defined in {self.get_location()}")
+				#traceback.print_stack(file=sys.stdout)
+				raise CheckError(f"{prop.id} has to be defined in {self.get_location()}")
 			else:
 				return default
 
@@ -390,6 +393,23 @@ class Map:
 		if an error is found."""
 		pass
 
+	def init_prop(self, prop):
+		"""Initialize a property from a property map."""
+		val = self.get_prop(prop)
+		if val is not None:
+			self.__dict__[prop.pid] = val
+
+	def init_props(self, props):
+		"""Initialize the properties from the provided map."""
+		for prop in props:
+			self.init_prop(prop)
+
+	def copy_props(self, target, props):
+		"""Copy the properties inside the current object to the target."""
+		for prop in props:
+			if prop in self.props:
+				target.set_prop(prop, self.props[prop])
+
 
 class Container(Map):
 	"""Class that may contain sub-objects."""
@@ -415,6 +435,7 @@ class Container(Map):
 		self.content.remove(item)
 
 	def check(self, mon):
+		Map.check(self, mon)
 		for item in self.content:
 			item.check(mon)
 
