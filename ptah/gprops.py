@@ -16,13 +16,13 @@
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+"""Graphic properties."""
+
 from ptah.props import type_union, type_penum, type_length, type_float, \
 	type_font, implies_set, type_color, type_percent, \
 	Property, ColorProperty, ImageProperty, StringProperty
 from ptah.graph import Mode, Align, BorderStyle, BorderWidth, Shadow, FontSize
 from ptah.util import enum_list
-
-"""Graphic properties."""
 
 
 border_width_type = type_union([

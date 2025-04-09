@@ -3,7 +3,9 @@
 import os
 import os.path
 import ptah
-from ptah import FontSize, Align, BorderStyle, Album
+from ptah import format
+from ptah.graph import FontSize, Align, BorderStyle
+from ptah.album import Album, Image, Text, Page
 import ptah.font
 import ptah.format
 import ptah.props
@@ -86,7 +88,8 @@ class Drawer(graph.Drawer):
 			"tikz",
 			"xcolor",
 			"moresize",
-			"tcolorbox"
+			"tcolorbox",
+			"hyperref"
 		]
 		self.tikz_packages = {
 			"patterns",
@@ -122,6 +125,7 @@ class Drawer(graph.Drawer):
 		rc = subprocess.run(
 			"pdflatex %s" % os.path.basename(self.out_path),
 			shell=True,
+			stdin = subprocess.DEVNULL,
 			stdout = sys.stdout if util.DEBUG else subprocess.DEVNULL,
 			stderr = sys.stderr if util.DEBUG else subprocess.DEVNULL)
 		if False:	#rc.returncode == 0:
@@ -494,13 +498,25 @@ pages:
     ...
 ...
 \\end{lstlisting}
+
+
+\\paragraph{Album Properties}
+
+\\begin{lstlisting}[showspaces=true]
+paths:
+  - PATH1
+  - PATH2
+  ...
+\\end{lstlisting}
+Defines paths to retrive images.
+
 """
 
 
 class DocDrawer(Drawer):
 
 	def __init__(self):
-		Drawer.__init__(self, ptah.Album("ptah.ptah"))
+		Drawer.__init__(self, Album("ptah.ptah"))
 		self.album.pages = []
 
 		for col in graph.HTML_COLORS.values():
@@ -511,8 +527,8 @@ class DocDrawer(Drawer):
 		self.album.date = "\\today"
 		self.doctype = "article"
 
-		self.mini = ptah.Album("mini")
-		self.mini.format = ptah.format.Format(
+		self.mini = Album("mini")
+		self.mini.format = format.Format(
 			"mini",
 			MINIATURE_WIDTH,
 			MINIATURE_HEIGHT,
@@ -538,11 +554,10 @@ class DocDrawer(Drawer):
 
 		# album doc
 		write(DOC_SYNTAX)
-		write("\\paragraph{Properties}\n")
 		write("\\begin{description}\n")
 		write("\\setlength\\itemsep{-1mm}\n")
 		for prop in Album.PROPS.values():
-			write("\\item[%s:]" % prop.id)
+			write("\\item[\\texttt{%s}:]" % prop.id)
 			self.write_text(prop.get_description())
 			write("\n")
 		write("\\end{description}\n")
@@ -569,7 +584,7 @@ class DocDrawer(Drawer):
 		# generate pages
 		write("\\section{Page types}\n")
 		for page in ptah.PAGE_MAP.values():
-			inst = page()
+			inst = page(self.mini)
 
 			# dump miniature
 			write("\\noindent\\begin{minipage}{.3\\textwidth}\n")
@@ -585,20 +600,25 @@ class DocDrawer(Drawer):
 			write("\\paragraph{Type:} %s\n" % page.NAME)
 			write("\\begin{description}\n")
 			write("\\setlength\\itemsep{-1mm}\n")
-			for prop in page.PROPS.values():
-				if isinstance(inst.__dict__[prop.pid], (list)):
-					n = True
-				else:
-					n = False
-				write("\\item[%s%s:]" % (prop.id, "\\#i" if n else ""))
-				self.write_text(prop.get_description())
-				write("\n")
+			counts = {}
+			for frame in inst.get_content():
+				cls = frame.__class__
+				try:
+					counts[cls] += 1
+				except KeyError:
+					counts[cls] = 1
+			for prop in page.PROPS:
+				write(f"\\item[{prop.id}:] {prop.get_description()}\n")
+			for (cls, cnt) in counts.items():
+				if cnt > 1:
+					for prop in cls.PROPS:
+						write(f"\\item[{prop.id}\\#i:] {prop.get_description()}\n")
 			write("\\end{description}\n")
 			write("\\end{minipage}\n\n\\bigskip")
 
 		# dump text
 		write("\\section{Text format}\n")
-		write("Subset of MarkDown format:\n")
+		write("Subset of \\href{https://www.markdownguide.org/}{MarkDown} format:\n")
 		write("\\begin{description}\n")
 		write("\\item[**text**, \_\_text\_\_] Bold.")
 		write("\\item[*text*, \_text\_] Italic.")

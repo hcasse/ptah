@@ -8,6 +8,7 @@ import traceback
 import ptah.font
 from ptah.util import CheckError, normalize
 from ptah import graph
+from ptah import io
 
 def implies_def(obj, index):
 	"""Default implies function."""
@@ -186,10 +187,11 @@ def type_string(self, val, obj):
 	return val
 
 def type_image(self, path, page):
-	if not os.path.exists(os.path.join(page.get_album().get_base(), path)):
-		raise CheckError("no image on path '%s' for %s" %
-			(path, page.name))
-	return path
+	actual_path = page.get_album().find(path)
+	if actual_path is None:
+		io.DEF.print_warning(f"image {path} in {page.get_location()} cannot be found!")
+		actual_path = ""
+	return actual_path
 
 def type_enum(vals):
 	def fun(self, val, obj):

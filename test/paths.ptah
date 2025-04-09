@@ -12,6 +12,10 @@ pages:
     type: center
     image: reed.jpeg
 
-  - name: normal
+  - name: normal2
     type: center
     image: vulture.jpeg
+
+  - name: error
+    type: center
+    image: photos/coucou.jpg

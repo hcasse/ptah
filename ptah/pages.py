@@ -2,7 +2,7 @@
 
 import os
 import ptah
-from ptah import Page, Text, Image
+from ptah.album import Page, Text, Image
 from ptah import graph
 from ptah import util
 from ptah import props
@@ -22,12 +22,7 @@ class CenterPage(Page):
 
 	NAME = "center"
 	INSIDE_PROP = props.BoolProperty("inside", "insert text inside image.")
-	PROPS = props.make(
-		Page.PROPS,
-		Text.PROPS,
-		Image.PROPS,
-		INSIDE_PROP
-	)
+	PROPS = Page.PROPS + Text.PROPS + Image.PROPS + [INSIDE_PROP]
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
@@ -64,11 +59,7 @@ class CenterPage(Page):
 class DuoPage(Page):
 
 	NAME = "duo"
-	PROPS = props.make(
-		Page.PROPS,
-		Image.PROPS,
-		PROP_ORIENTATION
-	)
+	PROPS = Page.PROPS + Image.PROPS + [PROP_ORIENTATION]
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
@@ -112,11 +103,7 @@ class DuoPage(Page):
 class TrioPage(Page):
 
 	NAME = "trio"
-	PROPS = props.make(
-		Page.PROPS,
-		Image.PROPS,
-		PROP_ORIENTATION
-	)
+	PROPS = Page.PROPS + Image.PROPS + [PROP_ORIENTATION]
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
@@ -161,10 +148,7 @@ class TrioPage(Page):
 class OnlyTextPage(Page):
 
 	NAME = "only-text"
-	PROPS = props.make(
-		Page.PROPS,
-		Text.PROPS
-	)
+	PROPS = Page.PROPS + Text.PROPS
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
