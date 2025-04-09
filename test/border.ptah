@@ -13,7 +13,7 @@ pages:
   - name: second
     type: center
     image: photos/chem.jpeg
-    image-mode: fill
+    mode: fill
     border-color: tomato
 
   - name: third

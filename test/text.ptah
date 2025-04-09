@@ -6,7 +6,7 @@ pages:
   - name: first
     type: only-text
     font-size: x-large
-    text-pos: bottom-right
+    text-align: bottom-right
     text: |
       This is a simple.
 

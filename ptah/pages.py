@@ -84,7 +84,7 @@ class DuoPage(Page):
 		Page.check(self, mon)
 		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
 
-	def gen(self, drawer):
+	def map(self, drawer):
 		if self.orientation == 0:
 			h = (drawer.height - drawer.sep) / 2
 			x1 = 0
@@ -101,8 +101,6 @@ class DuoPage(Page):
 			h = drawer.height
 		self.image1.map(Box(x1, y1, w, h))
 		self.image2.map(Box(x2, y2, w, h))
-		self.image1.gen(drawer)
-		self.image2.gen(drawer)
 
 	def gen_miniature(drawer):
 		h = (drawer.height - 2)/2.
@@ -132,9 +130,10 @@ class TrioPage(Page):
 		return self.MAP
 
 	def check(self, mon):
+		Page.check(self, mon)
 		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
 
-	def gen(self, drawer):
+	def map(self, drawer):
 		x, y = [0] * 3, [0] * 3
 		if self.orientation == 0:
 			h = (drawer.height - 2*drawer.sep) / 3
@@ -171,15 +170,18 @@ class OnlyTextPage(Page):
 	def __init__(self, album):
 		Page.__init__(self, album)
 		self.pad = graph.AbsLength(10)
-		self.text = Text(self)
+		self.text_frame = Text(self)
+
+	def check(self, mon):
+		self.copy_props(self.text_frame, Text.PROPS)
+		Page.check(self, mon)
 
 	def get_props_map(self):
 		return self.MAP
 
-	def gen(self, drawer):
+	def map(self, drawer):
 		pad = self.pad.get(min(drawer.width, drawer.height))
-		self.text.map(Box(pad, pad, drawer.width - 2*pad, drawer.height - 2*pad))
-		self.text.gen(drawer)
+		self.text_frame.map(Box(pad, pad, drawer.width - 2*pad, drawer.height - 2*pad))
 
 	def gen_miniature(drawer):
 		drawer.draw_miniature_text("text",

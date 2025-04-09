@@ -8,7 +8,7 @@ from ptah import format
 from ptah import props
 from ptah.props import Property, Map, Container, StringProperty
 from ptah import util
-from ptah.graph import Style, Box
+from ptah.graph import Style, Box, BorderStyle
 from ptah import io
 from ptah.gprops import *
 
@@ -94,6 +94,7 @@ class Image(Frame, graph.Style):
 
 	def check(self, mon):
 		self.image = self.get_prop(IMAGE_PROP, direct=True, required=self.required)
+		graph.Style.check(self, mon)
 
 	def gen(self, drawer):
 		if self.image is not None:

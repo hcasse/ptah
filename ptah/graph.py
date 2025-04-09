@@ -168,7 +168,17 @@ class Style:
 		self.shadow_xoffset = 1.5
 		self.shadow_yoffset = 1.5
 		self.shadow_color = "#000000"
-		self.shadow_opacity = 1.
+		self.shadow_opacity = None
+
+	def check(self, mon):
+		if self.shadow_opacity is None:
+			if self.shadow == Shadow.SIMPLE:
+				self.shadow_opacity = .5
+			elif self.shadow == Shadow.FUZZY:
+				self.shadow_opacity = 1.
+		if self.border_style == BorderStyle.NONE \
+		and self.border_color is not None:
+			self.border_style = BorderStyle.SOLID
 
 
 class TextStyle:
