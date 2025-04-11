@@ -11,7 +11,7 @@ Set the `PYTHONPATH` to the top source directory:
 
 [ ] add option to generate one or several pages
 
-[ ] Set up hierarchycal model for properties.
+[x] Set up hierarchycal model for properties.
 [x] "default" entry properties.
 [ ] "styles" entry.
 [ ] 'style" support in pages and so on.
