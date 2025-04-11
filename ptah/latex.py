@@ -9,6 +9,7 @@ from ptah.album import Album, Image, Text, Page
 import ptah.font
 import ptah.format
 import ptah.props
+from ptah import util
 import subprocess
 import sys
 from ptah import graph
@@ -583,7 +584,7 @@ class DocDrawer(Drawer):
 
 		# generate pages
 		write("\\section{Page types}\n")
-		for page in ptah.PAGE_MAP.values():
+		for page in util.PAGE_MAP.values():
 			inst = page(self.mini)
 
 			# dump miniature

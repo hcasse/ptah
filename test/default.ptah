@@ -1,0 +1,20 @@
+title: Default Test Album
+author: H. Cassé
+date: 10/04/2025
+format: a4
+background-color: ivory
+default:
+  border-color: tomato
+  border-width: thick
+pages:
+
+  - name: first
+    type: center
+    image: photos/woman.jpg
+
+  - name: second
+    type: center
+    image: photos/chem.jpeg
+    mode: fill
+    border-width: thin
+

@@ -353,7 +353,7 @@ class Map:
 			if val is not None:
 				return val
 			elif required:
-				#traceback.print_stack(file=sys.stdout)
+				traceback.print_stack(file=sys.stdout)
 				raise CheckError(f"{prop.id} has to be defined in {self.get_location()}")
 			else:
 				return default
@@ -436,10 +436,10 @@ class Container(Map):
 		"""Remove an item from the container."""
 		self.content.remove(item)
 
-	def check(self, mon):
-		Map.check(self, mon)
-		for item in self.content:
-			item.check(mon)
+	#def check(self, mon):
+	#	Map.check(self, mon)
+	#	for item in self.content:
+	#		item.check(mon)
 
 
 def make(*props):

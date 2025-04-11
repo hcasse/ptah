@@ -28,7 +28,7 @@ from ptah import format
 from ptah import util
 from ptah import latex
 from ptah import props
-from ptah import *
+from ptah.album import Album
 import ptah.pages
 
 

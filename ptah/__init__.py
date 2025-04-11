@@ -11,7 +11,3 @@ from ptah import util
 from ptah.graph import Style, Box, BorderStyle
 from ptah import io
 from ptah.gprops import *
-
-
-PAGE_MAP = {
-}

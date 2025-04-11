@@ -19,13 +19,23 @@
 """Representation of the album."""
 
 import os
+import yaml
 
 from ptah import format
 from ptah import graph
+from ptah import io
+from ptah import util
 from ptah.props import StringProperty, Property, Map, Container, make
 from ptah.gprops import *
 
 NAME_PROP = StringProperty("name", "name")
+
+def check_dict(data, context):
+	"""Check if data are a dictionary. Raises an exception if it is not the cas
+	in the passed context (implementation of props.Map)."""
+	if not isinstance(data, dict):
+		raise CheckError(f"{context.get_location()} data should a be a map!")
+
 
 class Frame(Map):
 	"""A frame inside a page with content."""
@@ -226,7 +236,7 @@ def type_pages(self, pages, album):
 
 		# make the page
 		try:
-			page = PAGE_MAP[type](album)
+			page = util.PAGE_MAP[type](album)
 		except KeyError:
 			raise util.CheckError(f"page type {type} is unknown!")
 
@@ -257,6 +267,11 @@ def type_format(self, fmt, album):
 	except KeyError:
 		raise util.CheckError(self, "format %s is unknown" % fmt)
 
+def type_default(self, data, album):
+	"""Convert the content of default entry."""
+	check_dict(data, self)
+	album.get_default().parse(data, io.DEF)
+	return album.get_default()
 
 class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
@@ -267,6 +282,7 @@ class Album(Container):
 	AUTHOR_PROP = StringProperty("author", "Author name.")
 	DATE_PROP = StringProperty("date", "Edition date.")
 	PATHS_PROP = Property("paths", "list of paths to find images", type_paths)
+	DEFAULT_PROP = Property("default", "default properties the rest of the album", type_default)
 	PROPS = make([
 		FORMAT_PROP,
 		PAGES_PROP,
@@ -275,12 +291,14 @@ class Album(Container):
 		DATE_PROP,
 		BACKGROUND_COLOR_PROP,
 		BACKGROUND_IMAGE_PROP,
-		PATHS_PROP
+		PATHS_PROP,
+		DEFAULT_PROP
 	])
 	MAP = make(PROPS)
 
 	def __init__(self, path):
-		Container.__init__(self)
+		default = Default()
+		Container.__init__(self, default)
 		self.path = path
 		self.pages = None
 		self.base = os.path.dirname(path)
@@ -292,6 +310,11 @@ class Album(Container):
 		self.background_color = None
 		self.background_image = None
 		self.paths = [self.base]
+		self.default = default
+
+	def get_default(self):
+		"""Get the album default container."""
+		return self.default
 
 	def set_paths(self, paths):
 		"""Set the paths used to retrieve resources like images."""
@@ -351,3 +374,18 @@ class Album(Container):
 					return jpath
 			return None
 
+
+class Default(Container):
+	"""Default property container."""
+
+	PROPS = Page.STYLE_PROPS + Image.STYLE_PROPS + Text.STYLE_PROPS
+	MAP = make(PROPS)
+
+	def __init__(self):
+		Container.__init__(self)
+
+	def get_props_map(self):
+		return self.MAP
+
+	def get_location(self):
+		return "default"

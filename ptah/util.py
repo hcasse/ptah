@@ -94,3 +94,6 @@ def normalize(s):
 def enum_list(cls):
 	"""Return a string representing the list of enumerated values."""
 	return ", ".join([normalize(x.name) for x in cls])
+
+PAGE_MAP = {
+}

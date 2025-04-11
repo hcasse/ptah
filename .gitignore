@@ -3,6 +3,7 @@ test/*.aux
 test/*.log
 test/*.pdf
 test/*.tex
+/test/*.out
 tmp/
 /.kdev4
 /ptah.kdev4

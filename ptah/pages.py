@@ -248,7 +248,7 @@ class TitlePage(Page):
 
 """Known pages."""
 def add(cls):
-	ptah.PAGE_MAP[cls.NAME] = cls
+	util.PAGE_MAP[cls.NAME] = cls
 add(TitlePage)
 add(CenterPage)
 add(DuoPage)
