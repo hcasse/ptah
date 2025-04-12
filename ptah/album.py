@@ -109,7 +109,9 @@ class Image(Frame, graph.Style):
 		self.required = required
 
 	def check(self, mon):
-		self.image = self.get_prop(IMAGE_PROP, direct=True, required=self.required)
+		self.image = self.get_prop(IMAGE_PROP, direct=True)
+		if self.image is None:
+			self.image = self.get_parent().get_prop(IMAGE_PROP, direct=True, required=self.required)
 		graph.Style.check(self, mon)
 
 	def gen(self, drawer):
@@ -144,7 +146,9 @@ class Text(Frame, graph.TextStyle):
 		self.required = required
 
 	def check(self, mon):
-		self.text = self.get_prop(TEXT_PROP, direct=True, required=self.required)
+		self.text = self.get_prop(TEXT_PROP, direct=True)
+		if self.text is None:
+			self.text = self.get_parent().get_prop(TEXT_PROP, direct=True, required=self.required)
 		self.init_props(self.STYLE_PROPS)
 
 	def gen(self, drawer):

@@ -35,8 +35,6 @@ class CenterPage(Page):
 		return self.MAP
 
 	def check(self, mon):
-		self.copy_props(self.image, Image.PROPS)
-		self.copy_props(self.text, Text.PROPS)
 		Page.check(self, mon)
 		self.inside = self.get_prop(self.INSIDE_PROP, direct=True, default=self.inside)
 
@@ -157,7 +155,6 @@ class OnlyTextPage(Page):
 		self.text_frame = Text(self)
 
 	def check(self, mon):
-		self.copy_props(self.text_frame, Text.PROPS)
 		Page.check(self, mon)
 
 	def get_props_map(self):
