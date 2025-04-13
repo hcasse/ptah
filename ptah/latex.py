@@ -114,11 +114,10 @@ class Drawer(graph.Drawer):
 
 	# Drawer functions
 	def gen(self):
-
-		# generate Latex file
 		self.gen_latex()
+		self.gen_pdf()
 
-		# generate PDF file
+	def gen_pdf(self):
 		dir = self.album.get_base()
 		if dir != "":
 			cwd = os.path.abspath(os.getcwd())
@@ -482,6 +481,8 @@ class Drawer(graph.Drawer):
 DOC_SYNTAX = """
 \\maketitle
 
+\\tableofcontents
+
 \\section{Syntax}
 Album can be named \\texttt{album.ptah} or any \\textit{XXX}\\texttt{.ptah}
 and must follows the scheme here:
@@ -501,7 +502,7 @@ pages:
 \\end{lstlisting}
 
 
-\\paragraph{Album Properties}
+\\paragraph{Structured Properties}~
 
 \\begin{lstlisting}[showspaces=true]
 paths:
@@ -510,6 +511,19 @@ paths:
   ...
 \\end{lstlisting}
 Defines paths to retrive images.
+
+\\begin{lstlisting}[showspaces=true]
+styles:
+  - name: NAME
+    PROP1: VAL1
+    PROP2: VAL2
+    ...
+  - name: NAME
+  ...
+\\end{lstlisting}
+Defines named styles.
+
+\\paragraph{Simple Properties:}~
 
 """
 
@@ -539,6 +553,11 @@ class DocDrawer(Drawer):
 		# text support
 		self.text_syntax = ptah.text.Syntax()
 		self.text_gen = None
+
+	def gen(self):
+		self.gen_latex()
+		self.gen_pdf()
+		self.gen_pdf()
 
 	def gen_geometry(self):
 		pass

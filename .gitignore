@@ -1,9 +1,10 @@
 **/__pycache__
-test/*.aux
-test/*.log
-test/*.pdf
-test/*.tex
+/test/*.aux
+/test/*.log
+/test/*.pdf
+/test/*.tex
 /test/*.out
+/test/*.toc
 tmp/
 /.kdev4
 /ptah.kdev4

@@ -36,9 +36,47 @@ def check_dict(data, context):
 	if not isinstance(data, dict):
 		raise CheckError(f"{context.get_location()} data should a be a map!")
 
+def is_dict(data):
+	"""Check if data is a dictionary."""
+	return isinstance(data, dict)
+
+def is_iterable(data):
+	"""Test if data is iterable."""
+	try:
+		return callable(data.__iter__)
+	except AttributeError:
+		return false
+
+def setup_style(name, obj):
+	style = obj.get_album().get_style(name)
+	if style is None:
+		io.DEF.print_warning(f"unknown style {name} in {obj.get_location()}")
+	else:
+		style.copy_props(obj, Style.PROPS)
+
+def parse_style(self, data, obj):
+	"""Parse a style property."""
+	setup_style(str(data), obj)
+
+STYLE_PROP = Property("style", "apply the named style to the current object", parse_style)
+
+def parse_styles(self, data, obj):
+	"""Parse a list of styles."""
+	if not is_iterable(data):
+		io.DEF.print_warning(f"styles must have a list of style names in {obj.get_location()}")
+	for item in data:
+		setup_style(str(item), obj)
+
+STYLES_PROP = Property("styles", "apply the named styles to the current object", parse_styles)
+
 
 class Frame(Map):
 	"""A frame inside a page with content."""
+
+	PROPS = [
+		STYLE_PROP,
+		STYLES_PROP
+	]
 
 	def __init__(self, page, name=None):
 		Map.__init__(self, page)
@@ -99,7 +137,7 @@ class Image(Frame, graph.Style):
 		SHADOW_OPACITY,
 		SHADOW_COLOR
 	]
-	PROPS = [IMAGE_PROP] + STYLE_PROPS
+	PROPS = [IMAGE_PROP] + STYLE_PROPS + Frame.PROPS
 	MAP = make(PROPS)
 
 	def __init__(self, page, required=True, name=None):
@@ -136,7 +174,7 @@ class Text(Frame, graph.TextStyle):
 		FONT_SIZE_PROP,
 		FONT_PROP
 	]
-	PROPS = [ TEXT_PROP ] + STYLE_PROPS
+	PROPS = [ TEXT_PROP ] + STYLE_PROPS + Frame.PROPS
 	MAP = make(PROPS)
 
 	def __init__(self, page, required=False, name=None):
@@ -166,7 +204,9 @@ class Page(Container, graph.PageStyle):
 	]
 	PROPS = [
 		NAME_PROP,
-		Property("type", "Type of page.", lambda prop, val, obj: None)
+		Property("type", "Type of page.", lambda prop, val, obj: None),
+		STYLE_PROP,
+		STYLES_PROP
 	] + STYLE_PROPS
 
 	NAME = ""
@@ -277,6 +317,23 @@ def type_default(self, data, album):
 	album.get_default().parse(data, io.DEF)
 	return album.get_default()
 
+def type_declare_styles(self, content, album):
+	if not is_iterable(content):
+		raise CheckError("styles at top-level must contain a list of stytles!")
+	for item in content:
+		if not is_dict(item):
+			io.DEF.print_error("a style must be a collection of definitions!")
+			continue
+		try:
+			name = str(item["name"])
+		except KeyError:
+			io.DEF.print_error("a style must have a name!")
+			continue
+		style = Style(name)
+		style.parse(item, io.DEF)
+		album.add_style(style)
+
+
 class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
 
@@ -287,17 +344,21 @@ class Album(Container):
 	DATE_PROP = StringProperty("date", "Edition date.")
 	PATHS_PROP = Property("paths", "list of paths to find images", type_paths)
 	DEFAULT_PROP = Property("default", "default properties the rest of the album", type_default)
+	DECLARE_STYLES_PROP = Property("styles", "styles usable in the rest of the album", type_declare_styles)
+	STYLE_PROPS = [
+		BACKGROUND_COLOR_PROP,
+		BACKGROUND_IMAGE_PROP,
+	]
 	PROPS = make([
 		FORMAT_PROP,
 		PAGES_PROP,
 		TITLE_PROP,
 		AUTHOR_PROP,
 		DATE_PROP,
-		BACKGROUND_COLOR_PROP,
-		BACKGROUND_IMAGE_PROP,
 		PATHS_PROP,
-		DEFAULT_PROP
-	])
+		DEFAULT_PROP,
+		DECLARE_STYLES_PROP
+	], STYLE_PROPS)
 	MAP = make(PROPS)
 
 	def __init__(self, path):
@@ -315,6 +376,18 @@ class Album(Container):
 		self.background_image = None
 		self.paths = [self.base]
 		self.default = default
+		self.styles = {}
+
+	def add_style(self, style):
+		"""Add a style to the album."""
+		self.styles[style.name] = style
+
+	def get_style(self, name):
+		"""Get a style by its name. Return None if not found."""
+		try:
+			return self.styles[name]
+		except KeyError:
+			return None
 
 	def get_default(self):
 		"""Get the album default container."""
@@ -393,3 +466,22 @@ class Default(Container):
 
 	def get_location(self):
 		return "default"
+
+
+class Style(Map):
+	"""A collection of properties that may be applied to another element like
+	page or frames."""
+
+	PROPS = Page.STYLE_PROPS + Image.STYLE_PROPS + Text.STYLE_PROPS
+	MAP = make(PROPS, NAME_PROP)
+
+	def __init__(self, name):
+		Map.__init__(self)
+		self.name = name
+
+	def get_location(self):
+		return f"style {self.name}"
+
+	def get_props_map(self):
+		return self.MAP
+

@@ -1,0 +1,56 @@
+title: Default Test Album
+author: H. Cassé
+date: 13/04/2025
+format: a4
+background-color: ivory
+styles:
+  - name: style1
+    border-color: tomato
+    border-width: thick
+  - name: style2
+    border-color: blue
+    border-width: 5mm
+  - name: style3
+    border-color: green
+  - name: style4
+    border-width: 2mm
+pages:
+
+  - name: first
+    type: center
+    image: photos/woman.jpg
+    style: style1
+
+  - name: second
+    type: center
+    image: photos/chem.jpeg
+    mode: fill
+    border-width: thin
+
+  - name: third
+    type: center
+    image: photos/chem.jpeg
+    mode: fill
+    border-width: thin
+    style: style2
+
+  - name: fourth
+    type: center
+    image: photos/chem.jpeg
+    styles:
+      - style3
+      - style4
+
+  - name: fifth
+    type: duo
+    orientation: horizontal
+    image#1: photos/hoang.jpg
+    image#2: photos/sword.jpeg
+    style#1: style1
+    styles#2:
+      - style3
+      - style4
+
+
+
+
