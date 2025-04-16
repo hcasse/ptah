@@ -1,4 +1,32 @@
-"""Management of properties for pages and album."""
+#
+#	Ptah -- Photo album generator
+#	Copyright (C) 2022 Hugues Cassé <hug.casse@gmail.com>
+#
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+# 	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+"""Management of properties for pages and album.
+
+Parsing function for properties takes the following parameters: (prop, data, props, monitor)
+where:
+* prop - property itself
+* data - data,
+* props - properties to augment,
+* monitor - monitor to display error message.
+
+Props must implement a location for the error message.
+"""
 
 import os
 import re
@@ -41,10 +69,10 @@ class Property:
 		self.implies = implies
 		self.default = default
 
-	def parse(self, val, obj):
+	def parse(self, val, obj, mon):
 		"""Parse the given text and return the corresponding text.
-		Raises CheckError if the text is not valid."""
-		return self.fun(self, val, obj)
+		Display an error or raises CheckError if the text is not valid."""
+		return self.fun(self, val, obj, mon)
 
 	def get(self, obj, index = None):
 		""""Get the value corresponding to the property in the given
@@ -61,117 +89,17 @@ class Property:
 		else:
 			obj.__dict__[self.pid][index] = val
 
-	def resolve_old(self, obj, direct=False, required=False, default=None):
-		"""Resolve the value of a propertry. If direct is True, do not lookup
-		in parents. If required, raises an error if the property cannot be
-		found. Returns the value of the property or None if it cannot be found."""
-		val = obj.get_attr(self.id)
-		if val is not None:
-			return val
-		if not direct and obj.parent is not None:
-			val = self.resolve(obj.parent, direct, required)
-		if val is None:
-			if required:
-				raise CheckError(f"property {self.id} is required in {obj.name}")
-			else:
-				val = default
-		return val
-
-	def set_scalar_old(self, val, obj):
-		"""Parse the file value and set it, if valid, to the object
-		corresponding field. The default implementation performs
-		the assignment to the field without test. May raise
-		CheckError if the value is not valid."""
-		if hasattr(obj.__dict__[self.pid], "__setitem__"):
-			raise CheckError("property %s must be indexed #i in %s." %
-				(self.id, obj.name))
-		obj.__dict__[self.pid] = self.parse(val, obj)
-		self.implies(obj, None)
-
-	def is_indexed_old(self):
-		"""Test if the property supports indexes."""
-		return self.multi
-
-	def set_indexed_old(self, i, val, obj):
-		"""Same as parse() but with an array. In addition, may raise
-		CheckError if the index is too big."""
-		l = obj.__dict__[self.pid]
-		if not hasattr(l, "__setitem__"):
-			raise CheckError("property %s is not indexed in %s." %
-				(self.id, obj.name))
-		if i < 0 or i >= len(l):
-			raise CheckError("property %s#%d with bad index in %s." %
-				(self.id, i, obj.name))
-		l[i] = self.parse(val, obj)
-		self.implies(obj, i)
-
-	def lookup_parent_old(self, p):
-		p = p.parent
-		while(p != None):
-			if p.__dict__[self.pid] != None:
-				return p.__dict__[self.pid]
-			p = p.parent
-		return None
-
-	def init_old(self, obj, n = 1, is_root = False):
-		"""Initialize a property in the given object in n instances."""
-		obj.__dict__[self.pid] = None
-		#x = self.default
-		#if self.mode == ptah.PROP_INH and not is_root:
-		#	x = None
-		#if n == 1:
-		#	obj.__dict__[self.pid] = x
-		#else:
-		#	obj.__dict__[self.pid] = [x] * n
-
-	def set_old(self, obj, val):
-		"""Set the value of a property."""
-		obj.__dict__[self.pid] = val
-
-	def check_old(self, obj):
-		"""Check if the property is correctly set in the object."""
-
-		# mode required
-		if self.mode == 1:
-			l = obj.__dict__[self.pid]
-			if not hasattr(l, "__getitem__"):
-				if l == None:
-					raise CheckError("property %s is required for %s!" %
-						(self.id, obj.name))
-			else:
-				l = obj.__dict__[self.pid]
-				for i in range(0, len(l)):
-					if l[i] == None:
-						raise CheckError("property %s#%d is required for %s!" %
-							(self.id, i+1, obj.name))
-
-		# mode inherited
-		elif self.mode == 2:
-			l = obj.__dict__[self.pid]
-			if not hasattr(l, "__getitem__"):
-				if l == None:
-					obj.__dict__[self.pid] = self.lookup_parent(obj)
-			else:
-				l = obj.__dict__[self.pid]
-				x = None
-				for i in range(0, len(l)):
-					if l[i] == None:
-						if x == None:
-							x = self.lookup_parent(obj)
-						l[i] = x
-
-
 	def get_description(self):
 		"""Get the description of the property."""
 		return self.desc
 
 
-def type_float(self, val, obj):
+def parse_float(self, val, obj, mon):
 	try:
 		return float(val)
 	except ValueError:
-		raise CheckError("value %s of %s should be a floatting-pointer number"
-			% (self.id, obj.name))
+		raise CheckError(f"value {self.id} of {obj.get_location()} should be a floatting-pointer number")
+
 
 LENGTH_RE = re.compile("([+-]?[0-9\.]?)([a-zA-Z]+)")
 
@@ -183,37 +111,26 @@ LENGTH_UNITS = {
 	"pt": 0.3514598
 }
 
-def type_string(self, val, obj):
-	return val
+def parse_string(self, val, obj, mon):
+	return str(val)
 
-def type_image(self, path, page):
+def parse_image(self, path, page, mon):
 	actual_path = page.get_album().find(path)
 	if actual_path is None:
-		io.DEF.print_warning(f"image {path} in {page.get_location()} cannot be found!")
-		actual_path = ""
+		raise CheckError(f"image {path} in {page.get_location()} cannot be found!")
 	return actual_path
 
-def type_enum(vals):
-	def fun(self, val, obj):
-		val = val.lower()
-		for i in range(0, len(vals)):
-				if val == vals[i]:
-					return i
-		raise CheckError("in %s, %s must be one of %s" %
-			(obj.name, id, ", ".join(vals)))
-	return fun
-
-def type_penum(cls):
+def parse_penum(cls):
 	"""Type support for a Python enumeration."""
 	map = { normalize(x.name): x for x in cls }
-	def convert(self, val, obj):
+	def convert(self, val, obj, mon):
 		try:
 			return map[normalize(val).strip()]
 		except KeyError:
 			raise CheckError(f"{val} in {obj.name} must be one of {', '.join([normalize(x.name) for x in cls])}")
 	return convert
 
-def type_color(self, col, obj):
+def parse_color(self, col, obj, mon):
 	if isinstance(col, str):
 		col = col.strip().lower()
 		if col.startswith('#'):
@@ -230,7 +147,7 @@ def type_color(self, col, obj):
 				pass
 	raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
 
-def type_length(self, val, obj):
+def parse_length(self, val, obj, mon):
 	try:
 		if isinstance(val, (int, float)):
 			return graph.AbsLength(val)
@@ -243,26 +160,26 @@ def type_length(self, val, obj):
 					float(m.group(1)) * LENGTH_UNITS[m.group(2)])
 	except (ValueError, KeyError):
 		pass
-	raise CheckError("bad length for %s in %s" % (self.id, obj.name))
+	raise CheckError(f"bad length for {self.id} in {obj.get_location()}")
 
-def type_bool(self, val, obj):
+def parse_bool(self, val, obj, mon):
 	if val == False or val == True:
 		return val
 	else:
-		raise CheckError("bad boolean value for %s in %s."
-			% (self.id, obj.name))
+		raise CheckError(f"bad boolean value for {self.id} in {obj.get_location()}.")
 
-def type_union(types):
-	def fun(self, val, obj):
-		for type in types:
+def parse_union(parsers):
+	"""Join several parsers"""
+	def fun(self, val, obj, mon):
+		for parser in parsers:
 			try:
-				return type(self, val, obj)
+				return parser(self, val, obj, mon)
 			except CheckError:
-				continue
-		raise CheckError("cannot parse %s in %s" % (self.id, obj.name))
+				pass
+		raise CheckError(f"cannot parse {self.id} in {obj.get_location()}")
 	return fun
 
-def type_percent(self, val, obj):
+def parse_percent(self, val, obj, mon):
 	"""Parse a percent argument like FLOAT% or FLOAT in [0, 1].
 	Return a value in [0, 1]."""
 	try:
@@ -274,13 +191,12 @@ def type_percent(self, val, obj):
 			return x
 	except ValueError:
 		pass
-	raise CheckError("cannot parse value %s for %s in %s" %
-		(val, self.id, obj.name))
+	raise CheckError(f"cannot parse value {val} for {self.id} in {obj.get_location()}")
 
 
 FONT_WITH_ERROR = set()
 
-def type_font(self, val, obj):
+def parse_font(self, val, obj, mon):
 	"""Convert val to a font. Display a warning if the
 	font does not exists and returns None."""
 	val = ptah.util.normalize(val).strip()
@@ -290,25 +206,22 @@ def type_font(self, val, obj):
 	else:
 		if val not in FONT_WITH_ERROR:
 			FONT_WITH_ERROR.add(val)
-		CONSOLE.warn(f"cannot find font {val} in {obj.name}! Reverting to default.")
-		return None
+		raise CheckError(f"cannot find font {val} in {obj.get_location()}! Reverting to default.")
 
 
 # For compatibility
 def ImageProperty(id, desc, mode = 1):
-	return Property(id, desc, type_image, mode)
-def EnumProperty(id, desc, vals, mode = 0):
-	return Property(id, desc, type_enum(vals), mode)
+	return Property(id, desc, parse_image, mode)
 def StringProperty(id, desc, mode = 0):
-	return Property(id, desc, type_string, mode)
+	return Property(id, desc, parse_string, mode)
 def FloatProperty(id, desc, mode = 0):
-	return Property(id, desc, type_float, mode)
+	return Property(id, desc, parse_float, mode)
 def ColorProperty(id, desc, mode = 0):
-	return Property(id, desc, type_color, mode)
+	return Property(id, desc, parse_color, mode)
 def LengthProperty(id, desc, mode = 0):
-	return Property(id, desc, type_length, mode)
+	return Property(id, desc, parse_length, mode)
 def BoolProperty(id, desc, mode = 0):
-	return Property(id, desc, type_bool, mode)
+	return Property(id, desc, parse_bool, mode)
 
 
 class Map:
@@ -353,7 +266,7 @@ class Map:
 			if val is not None:
 				return val
 			elif required:
-				traceback.print_stack(file=sys.stdout)
+				#traceback.print_stack(file=sys.stdout)
 				raise CheckError(f"{prop.id} has to be defined in {self.get_location()}")
 			else:
 				return default
@@ -362,10 +275,12 @@ class Map:
 		"""Parse a single property."""
 		try:
 			prop = self.get_props_map()[key]
-			val = prop.parse(val, self)
+			val = prop.parse(val, self, mon)
 			self.set_prop(prop, val)
 		except KeyError:
 			mon.print_warning(f"no property {key} in {self.get_location()}. Ignoring it.")
+		except CheckError as e:
+			mon.print_error(f"bad value {val} for {key} in {self.get_location()}: {e}. Value must be {prop.desc}.")
 
 	def parse(self, data, mon):
 		"""Parse the given data, a dictionary of (key, value) and built
@@ -435,11 +350,6 @@ class Container(Map):
 	def remove_item(self, item):
 		"""Remove an item from the container."""
 		self.content.remove(item)
-
-	#def check(self, mon):
-	#	Map.check(self, mon)
-	#	for item in self.content:
-	#		item.check(mon)
 
 
 def make(*props):

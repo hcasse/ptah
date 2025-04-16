@@ -1,5 +1,6 @@
 """Basic collection of pages."""
 
+from enum import Enum
 import os
 import ptah
 from ptah.album import Page, Text, Image
@@ -8,8 +9,16 @@ from ptah import util
 from ptah import props
 from ptah.graph import *
 
-PROP_ORIENTATION = props.EnumProperty(
-	"orientation", "orientation", ["vertical", "horizontal"])
+
+class Orientation(Enum):
+	"""Orientation."""
+
+	VERTICAL = 0
+	HORIZONTAL = 1
+
+
+ORIENTATION_PROP = props.Property(
+	"orientation", "orientation", props.parse_penum(Orientation))
 MINIATURE_BACK = "yellow!50!white"
 
 
@@ -57,12 +66,12 @@ class CenterPage(Page):
 class DuoPage(Page):
 
 	NAME = "duo"
-	PROPS = Page.PROPS + Image.PROPS + [PROP_ORIENTATION]
+	PROPS = Page.PROPS + Image.PROPS + [ORIENTATION_PROP]
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
 		Page.__init__(self, album)
-		self.orientation = 0
+		self.orientation = Orientation.VERTICAL
 		self.image1 = Image(self, name="image1")
 		self.image2 = Image(self, name="image2")
 
@@ -71,10 +80,10 @@ class DuoPage(Page):
 
 	def check(self, mon):
 		Page.check(self, mon)
-		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
+		self.orientation = self.get_prop(ORIENTATION_PROP, direct=True, default=self.orientation)
 
 	def map(self, drawer):
-		if self.orientation == 0:
+		if self.orientation == Orientation.VERTICAL:
 			h = (drawer.height - drawer.sep) / 2
 			x1 = 0
 			y1 = 0
@@ -101,7 +110,7 @@ class DuoPage(Page):
 class TrioPage(Page):
 
 	NAME = "trio"
-	PROPS = Page.PROPS + Image.PROPS + [PROP_ORIENTATION]
+	PROPS = Page.PROPS + Image.PROPS + [ORIENTATION_PROP]
 	MAP = props.make(PROPS)
 
 	def __init__(self, album):
@@ -109,18 +118,18 @@ class TrioPage(Page):
 		self.image1 = Image(self)
 		self.image2 = Image(self)
 		self.image3 = Image(self)
-		self.orientation = 0
+		self.orientation = Orientation.VERTICAL
 
 	def get_props_map(self):
 		return self.MAP
 
 	def check(self, mon):
 		Page.check(self, mon)
-		self.orientation = self.get_prop(PROP_ORIENTATION, direct=True, default=self.orientation)
+		self.orientation = self.get_prop(ORIENTATION_PROP, direct=True, default=self.orientation)
 
 	def map(self, drawer):
 		x, y = [0] * 3, [0] * 3
-		if self.orientation == 0:
+		if self.orientation == Orientation.VERTICAL:
 			h = (drawer.height - 2*drawer.sep) / 3
 			w = drawer.width
 			y[1] = h + drawer.sep

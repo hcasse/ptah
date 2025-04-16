@@ -162,8 +162,8 @@ class Style:
 		self.horizontal_shift = AbsLength(0)
 		self.vertical_shift = AbsLength(0)
 		self.border_style = BorderStyle.NONE
-		self.border_width = BorderStyle.SOLID
-		self.border_color = "#000000"
+		self.border_width = None
+		self.border_color = None
 		self.shadow = Shadow.NONE
 		self.shadow_xoffset = 1.5
 		self.shadow_yoffset = 1.5
@@ -176,9 +176,14 @@ class Style:
 				self.shadow_opacity = .5
 			elif self.shadow == Shadow.FUZZY:
 				self.shadow_opacity = 1.
-		if self.border_style == BorderStyle.NONE \
-		and self.border_color is not None:
+		if (self.border_color is not None or self.border_width is not None) \
+		and self.border_style is BorderStyle.NONE:
 			self.border_style = BorderStyle.SOLID
+		if self.border_style is not BorderStyle.NONE:
+			if self.border_color is None:
+				self.border_color = "#000000"
+			if self.border_width is None:
+				self.border_width = BorderWidth.MEDIUM
 
 
 class TextStyle:

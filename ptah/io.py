@@ -105,7 +105,7 @@ class Monitor:
 		"""Print an error message."""
 		if not self.quiet:
 			self.handle_action()
-			sys.stderr.write(BOLD + RED + "ERROR: " + str(msg) + NORMAL + "\n")
+			sys.stderr.write(f"{BOLD}{RED}ERROR: {NORMAL}{msg}\n")
 			sys.stderr.flush()
 
 	def print_fatal(self, msg):

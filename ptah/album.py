@@ -47,25 +47,25 @@ def is_iterable(data):
 	except AttributeError:
 		return false
 
-def setup_style(name, obj):
+def setup_style(name, obj, mon):
 	style = obj.get_album().get_style(name)
 	if style is None:
-		io.DEF.print_warning(f"unknown style {name} in {obj.get_location()}")
+		mon.print_warning(f"unknown style {name} in {obj.get_location()}")
 	else:
 		style.copy_props(obj, Style.PROPS)
 
-def parse_style(self, data, obj):
+def parse_style(self, data, obj, mon):
 	"""Parse a style property."""
-	setup_style(str(data), obj)
+	setup_style(str(data), obj, mon)
 
 STYLE_PROP = Property("style", "apply the named style to the current object", parse_style)
 
-def parse_styles(self, data, obj):
+def parse_styles(self, data, obj, mon):
 	"""Parse a list of styles."""
 	if not is_iterable(data):
-		io.DEF.print_warning(f"styles must have a list of style names in {obj.get_location()}")
+		mon.print_warning(f"styles must have a list of style names in {obj.get_location()}")
 	for item in data:
-		setup_style(str(item), obj)
+		setup_style(str(item), obj, mon)
 
 STYLES_PROP = Property("styles", "apply the named styles to the current object", parse_styles)
 
@@ -149,8 +149,9 @@ class Image(Frame, graph.Style):
 	def check(self, mon):
 		self.image = self.get_prop(IMAGE_PROP, direct=True)
 		if self.image is None:
-			self.image = self.get_parent().get_prop(IMAGE_PROP, direct=True, required=self.required)
-		graph.Style.check(self, mon)
+			self.image = self.get_parent().get_prop(IMAGE_PROP, direct=True)
+		if self.image is None:
+			mon.print_error(f"image in {self.get_location()} is required!")
 
 	def gen(self, drawer):
 		if self.image is not None:
@@ -158,6 +159,7 @@ class Image(Frame, graph.Style):
 
 	def declare(self, drawer):
 		self.init()
+		graph.Style.check(self, None)
 		if self.border_style != BorderStyle.NONE:
 			if self.border_color is not None:
 				drawer.declare_color(self.border_color)
@@ -204,7 +206,7 @@ class Page(Container, graph.PageStyle):
 	]
 	PROPS = [
 		NAME_PROP,
-		Property("type", "Type of page.", lambda prop, val, obj: None),
+		Property("type", "Type of page.", lambda prop, val, obj, mon: None),
 		STYLE_PROP,
 		STYLES_PROP
 	] + STYLE_PROPS
@@ -266,7 +268,7 @@ class Page(Container, graph.PageStyle):
 			frame.check(mon)
 
 
-def type_pages(self, pages, album):
+def parse_pages(self, pages, album, mon):
 	if not hasattr(pages, "__iter__"):
 		raise CheckError("pages should a be a list of pages!")
 	res = []
@@ -282,7 +284,8 @@ def type_pages(self, pages, album):
 		try:
 			page = util.PAGE_MAP[type](album)
 		except KeyError:
-			raise util.CheckError(f"page type {type} is unknown!")
+			mon.print_error(f"page type {type} is unknown! Ignoring it!")
+			continue
 
 		# initialize the page
 		page.number = len(res)
@@ -291,43 +294,45 @@ def type_pages(self, pages, album):
 		except KeyError:
 			pass
 		res.append(page)
-		page.parse(desc, io.DEF)
+		page.parse(desc, mon)
 
 	return res
 
 
-def type_paths(self, paths, album):
+def parse_paths(self, paths, album, mon):
 	"""Supports paths of the album."""
 	if not hasattr(paths, "__iter__") \
 	or not all([isinstance(x, str) for x in paths]):
-		raise CheckError("paths should a be a list of paths!")
-	album.set_paths(paths)
-	return paths
+		mon.print_error("paths should a be a list of paths!")
+		return None
+	else:
+		album.set_paths(paths)
+		return paths
 
 
-def type_format(self, fmt, album):
+def parse_format(self, fmt, album, mon):
 	try:
 		return format.FORMATS[fmt.upper()]
 	except KeyError:
-		raise util.CheckError(self, "format %s is unknown" % fmt)
+		mon.print_error(f"format {fmt} is unknown! Reverting to A4.")
 
-def type_default(self, data, album):
+def parse_default(self, data, album, mon):
 	"""Convert the content of default entry."""
 	check_dict(data, self)
-	album.get_default().parse(data, io.DEF)
+	album.get_default().parse(data, mon)
 	return album.get_default()
 
-def type_declare_styles(self, content, album):
+def parse_declare_styles(self, content, album, mon):
 	if not is_iterable(content):
-		raise CheckError("styles at top-level must contain a list of stytles!")
+		mon.print_error("styles at top-level must contain a list of styles!")
 	for item in content:
 		if not is_dict(item):
-			io.DEF.print_error("a style must be a collection of definitions!")
+			mon.print_error("a style must be a collection of definitions!")
 			continue
 		try:
 			name = str(item["name"])
 		except KeyError:
-			io.DEF.print_error("a style must have a name!")
+			mon.print_error("a style must have a name!")
 			continue
 		style = Style(name)
 		style.parse(item, io.DEF)
@@ -337,14 +342,14 @@ def type_declare_styles(self, content, album):
 class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
 
-	FORMAT_PROP = Property("format", "page format", type_format)
-	PAGES_PROP = Property("pages", "list of pages", type_pages)
+	FORMAT_PROP = Property("format", "page format", parse_format)
+	PAGES_PROP = Property("pages", "list of pages", parse_pages)
 	TITLE_PROP = StringProperty("title", "Album title.")
 	AUTHOR_PROP = StringProperty("author", "Author name.")
 	DATE_PROP = StringProperty("date", "Edition date.")
-	PATHS_PROP = Property("paths", "list of paths to find images", type_paths)
-	DEFAULT_PROP = Property("default", "default properties the rest of the album", type_default)
-	DECLARE_STYLES_PROP = Property("styles", "styles usable in the rest of the album", type_declare_styles)
+	PATHS_PROP = Property("paths", "list of paths to find images", parse_paths)
+	DEFAULT_PROP = Property("default", "default properties the rest of the album", parse_default)
+	DECLARE_STYLES_PROP = Property("styles", "styles usable in the rest of the album", parse_declare_styles)
 	STYLE_PROPS = [
 		BACKGROUND_COLOR_PROP,
 		BACKGROUND_IMAGE_PROP,
@@ -429,8 +434,10 @@ class Album(Container):
 			with open(self.path) as file:
 				desc = yaml.safe_load(file)
 				self.parse(desc, mon)
-		except yaml.YAMLError as e:
+		except (yaml.YAMLError, UnicodeDecodeError) as e:
 			raise util.CheckError(str(e))
+		except FileNotFoundError:
+			raise util.CheckError(f"cannot open {self.path}!")
 
 	def check(self, mon):
 		self.pages = self.get_prop(self.PAGES_PROP, direct=True, required=True)
