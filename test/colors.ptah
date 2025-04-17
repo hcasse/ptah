@@ -1,0 +1,21 @@
+title: Colors Test Album
+author: H. Cassé
+date: 17/04/2024
+format: a4
+background-color: ivory
+colors:
+  myorange: "#F18622"
+  myblue: cyan
+pages:
+
+  - name: first
+    type: center
+    image: photos/woman.jpg
+    border-color: myorange
+
+  - name: second
+    type: center
+    image: photos/chem.jpeg
+    mode: fill
+    border-color: myblue
+

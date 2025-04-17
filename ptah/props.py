@@ -141,11 +141,15 @@ def parse_color(self, col, obj, mon):
 				except ValueError:
 					pass
 		else:
-			try:
-				return graph.HTML_COLORS[col]
-			except KeyError:
-				pass
-	raise CheckError("%s: bad color in %s!" % (self.id, obj.name))
+			color = obj.get_album().get_color(col)
+			if color is not None:
+				return color
+			else:
+				try:
+					return graph.HTML_COLORS[col]
+				except KeyError:
+					pass
+	raise CheckError(f"{self.id}: bad color in {obj.get_location()}!")
 
 def parse_length(self, val, obj, mon):
 	try:

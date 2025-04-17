@@ -25,7 +25,7 @@ from ptah import format
 from ptah import graph
 from ptah import io
 from ptah import util
-from ptah.props import StringProperty, Property, Map, Container, make
+from ptah.props import StringProperty, Property, Map, Container, make, parse_color
 from ptah.gprops import *
 
 NAME_PROP = StringProperty("name", "name")
@@ -338,6 +338,19 @@ def parse_declare_styles(self, content, album, mon):
 		style.parse(item, io.DEF)
 		album.add_style(style)
 
+def parse_colors(self, content, album, mon):
+	"""Parse the definition of colors."""
+	if not is_dict(content):
+		mon.print_error("colors must be a list of color definitions!")
+		return
+	for (key, val) in content.items():
+		pseudo = Property(key, "defined color", parse_color)
+		try:
+			color = parse_color(pseudo, val, album, mon)
+			album.add_color(key, color)
+		except util.CheckError as e:
+			mon.print_error(f"bad color {key}: {val}: {e}.")
+			continue
 
 class Album(Container):
 	"""The album itself, mainly an ordered collection of pages."""
@@ -350,6 +363,7 @@ class Album(Container):
 	PATHS_PROP = Property("paths", "list of paths to find images", parse_paths)
 	DEFAULT_PROP = Property("default", "default properties the rest of the album", parse_default)
 	DECLARE_STYLES_PROP = Property("styles", "styles usable in the rest of the album", parse_declare_styles)
+	COLORS_PROP = Property("colors", "named colors usable in the rest of the album", parse_colors)
 	STYLE_PROPS = [
 		BACKGROUND_COLOR_PROP,
 		BACKGROUND_IMAGE_PROP,
@@ -362,7 +376,8 @@ class Album(Container):
 		DATE_PROP,
 		PATHS_PROP,
 		DEFAULT_PROP,
-		DECLARE_STYLES_PROP
+		DECLARE_STYLES_PROP,
+		COLORS_PROP
 	], STYLE_PROPS)
 	MAP = make(PROPS)
 
@@ -382,6 +397,10 @@ class Album(Container):
 		self.paths = [self.base]
 		self.default = default
 		self.styles = {}
+		self.colors = {}
+
+	def get_album(self):
+		return self
 
 	def add_style(self, style):
 		"""Add a style to the album."""
@@ -393,6 +412,18 @@ class Album(Container):
 			return self.styles[name]
 		except KeyError:
 			return None
+
+	def add_color(self, name, color):
+		"""Declare a named color."""
+		self.colors[name] = color
+
+	def get_color(self, name):
+		"""Get a color by its name. Return None if not declared."""
+		try:
+			color = self.colors[name]
+		except KeyError:
+			color = None
+		return color
 
 	def get_default(self):
 		"""Get the album default container."""

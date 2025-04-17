@@ -14,7 +14,8 @@ Set the `PYTHONPATH` to the top source directory:
 [x] Set up hierarchycal model for properties.
 [x] "default" entry properties.
 [x] "styles" entry.
-[x] 'style" support in pages and so on.
+[x] "style" support in pages and so on.
+[x] "colors" support for named colors.
 
 [ ] Separate common options from page relative options.
 [ ] Add more page models.

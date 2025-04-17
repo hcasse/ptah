@@ -523,6 +523,14 @@ styles:
 \\end{lstlisting}
 Defines named styles.
 
+\\begin{lstlisting}[showspaces=true]
+colors:
+  name1: COLOR1
+  name2: COLOR2
+  ...
+\\end{lstlisting}
+Defines named colors.
+
 \\paragraph{Simple Properties:}~
 
 """
