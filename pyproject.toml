@@ -1,0 +1,25 @@
+[project]
+name = "ptah"
+version = "0.9"
+authors = [
+	{ name="Hugues Cassé", email="hug.casse@gmail.com" }
+]
+description = "PDF photo album generator"
+readme = "README.md"
+requires-python = ">=3.0"
+license = "GPL-3.0"
+license-files = ["COPYING.md"]
+
+#[project.urls]
+#Homepage = "https://github.com/hcasse/Thot"
+
+[project.scripts]
+ptah 		= "ptah.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+#py-modules = ["thotx"]
+packages = ["ptah"]

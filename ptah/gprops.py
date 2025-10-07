@@ -71,6 +71,7 @@ VERTICAL_SHIFT_PROP = Property(
 TEXT_ALIGN_PROP = Property("text-align", f"Text alignment among {enum_list(Align)}.",
 	parse_penum(Align))
 TEXT_PROP = StringProperty("text", "Page text.")
+TEXT_COLOR_PROP = Property("text-color", f"Color fot the text.", parse_color)
 FONT_SIZE_PROP = Property("font-size", "font size.", parse_penum(FontSize))
 FONT_PROP = Property("font", "font name", parse_font)
 

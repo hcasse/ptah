@@ -173,6 +173,7 @@ class Text(Frame, graph.TextStyle):
 
 	STYLE_PROPS = [
 		TEXT_ALIGN_PROP,
+		TEXT_COLOR_PROP,
 		FONT_SIZE_PROP,
 		FONT_PROP
 	]
@@ -194,6 +195,11 @@ class Text(Frame, graph.TextStyle):
 	def gen(self, drawer):
 		if self.text is not None:
 			drawer.draw_text(self.text, self.box, self)
+
+	def declare(self, drawer):
+		self.init()
+		if self.text_color is not None:
+				drawer.declare_color(self.text_color)
 
 
 class Page(Container, graph.PageStyle):

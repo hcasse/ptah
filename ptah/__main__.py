@@ -19,8 +19,10 @@
 """Ptah command."""
 
 import argparse
+from importlib.metadata import version, PackageNotFoundError
 import re
 import subprocess
+import sys
 import yaml
 
 from ptah import io
@@ -30,6 +32,13 @@ from ptah import latex
 from ptah import props
 from ptah.album import Album
 import ptah.pages
+
+
+# get version
+try:
+	__version__ = version("ptah")
+except PackageNotFoundError:
+	__version__ = "0.0.0"
 
 
 # formats
@@ -65,6 +74,8 @@ def main(mon = io.DEF):
 		help="Generate the documentation.")
 	parser.add_argument("--debug", action="store_true",
 		help="Generate the documentation.")
+	parser.add_argument("--version", action="store_true",
+		help="Display the version.")
 
 	args = parser.parse_args()
 	albums = args.albums
@@ -74,6 +85,11 @@ def main(mon = io.DEF):
 	# generic options
 	if args.debug:
 		util.DEBUG = True
+
+	# version case
+	if args.version:
+		print(f"ptah V{__version__}, copyright (c) 2025 H. Cassé <hug.casse@gmail.com>")
+		sys.exit(0)
 
 	# generate the documentation
 	if args.doc:
@@ -89,5 +105,7 @@ def main(mon = io.DEF):
 			except util.CheckError as e:
 				mon.print_error(str(e))
 
-main()
+
+if __name__ == "__main__":
+	main()
 

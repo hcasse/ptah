@@ -190,6 +190,7 @@ class TextStyle:
 
 	def __init__(self):
 		self.text_align = Align.CENTER
+		self.text_color = None
 		self.font_size = FontSize.MEDIUM
 		self.font = None
 

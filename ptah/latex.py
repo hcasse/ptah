@@ -433,7 +433,10 @@ class Drawer(graph.Drawer):
 		write(f"align={align}, {anc}, inner sep=0] at({x + dx}mm, {y + dy}mm) {{")
 		if style.font is not None:
 			style.font.use(self.out)
+		if style.text_color is not None:
+			write(f"\\color{{{self.get_color(style.text_color)}}} ")
 		parsed_text = self.text_syntax.parse(text)
+		print(f"DEBUG: {parsed_text}")
 		if self.text_gen is None:
 			self.text_gen = ptah.text.Output(self.out)
 		self.text_gen.output(parsed_text)

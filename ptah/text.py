@@ -19,7 +19,7 @@
 """Classes managing text. It is currently based on Thot."""
 
 from thot.common import Env
-from thot.doc import Document
+from thot.doc import Document, Par
 from thot.tparser import Manager
 from thot.back import get_output
 
@@ -29,6 +29,10 @@ class Text:
 	def __init__(self, syntax, range):
 		self.syntax = syntax
 		self.range = range
+
+	def __str__(self):
+		return " ".join([x.toText() for x in self.range])
+
 
 class Syntax:
 	"""Syntax to read a text."""
@@ -42,11 +46,11 @@ class Syntax:
 	def parse(self, text):
 		"""Parse the passed text and returns corresponding Text object."""
 		lines = [l + '\n' for l in text.split('\n')]
-		before = len(self.doc.getContent())
+		self.doc.clear()
+		self.doc.append(Par())
 		self.manager.close_to_top()
 		self.manager.parseInternal(lines, "<ptah>")
-		after = len(self.doc.getContent())
-		return Text(self, self.doc.getContent()[before:after])
+		return Text(self, self.doc.getContent())
 
 
 class Output:

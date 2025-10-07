@@ -6,6 +6,15 @@ Set the `PYTHONPATH` to the top source directory:
 
 	export PYTHONPATH=$PYTHONPATH:$PWD
 
+Run `ptah` with:
+
+	python3 -m ptah test/FILE.ptah
+
+
+## Python Depencies
+
+* pyyaml
+* pillow
 
 ## To Do
 
