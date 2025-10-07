@@ -29,6 +29,7 @@ Props must implement a location for the error message.
 """
 
 import os
+import os.path
 import re
 import sys
 import traceback
@@ -115,7 +116,8 @@ def parse_string(self, val, obj, mon):
 	return str(val)
 
 def parse_image(self, path, page, mon):
-	actual_path = page.get_album().find(path)
+	album = page.get_album()
+	actual_path = album.find(path)
 	if actual_path is None:
 		raise CheckError(f"image {path} in {page.get_location()} cannot be found!")
 	return actual_path

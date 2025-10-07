@@ -258,22 +258,37 @@ class Drawer(graph.Drawer):
 			-self.bmargin-self.height/2
 		)
 
+	def make_path(self, path):
+		"""Build a path as much as possible relative to the album path."""
+		if os.path.isabs(path):
+			result = path
+		else:
+			base = self.album.get_base()
+			if base == ".":
+				result = path
+			elif path.startswith(base):
+				result = path[len(base)+1:]
+			else:
+				result = path
+		return result
+
 	def gen_background_image(self, page):
 		write = self.out.write
 		path = page.background_image
+		inc_path = self.make_path(page.background_image)
 
 		if page.background_mode == ptah.Mode.FIT:
 			cx, cy = self.get_page_center()
 			write("\\node[overlay, inner sep=0] at(%smm, %smm) {"
 				% (cx, cy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}};"
-				% (self.format.width, self.format.height, path))
+				% (self.format.width, self.format.height, inc_path))
 
 		elif page.background_mode == ptah.Mode.STRETCH:
 			write("\\node[overlay, inner sep=0, anchor=north west] at(%smm, %smm) {"
 				% (-self.width/2-self.lmargin, self.height/2+self.tmargin))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}};\n"
-				% (self.format.width, self.format.height, path))
+				% (self.format.width, self.format.height, inc_path))
 
 		elif page.background_mode == ptah.Mode.FILL:
 			w, h = self.get_size(path)
@@ -286,12 +301,12 @@ class Drawer(graph.Drawer):
 			cx, cy = self.get_page_center()
 			write("\\node[overlay] at(%smm, %smm) {" % (cx, cy))
 			write("\\includegraphics[%s, keepaspectratio]{%s}};"
-				% (param, path));
+				% (param, inc_path));
 
 		elif page.background_mode == ptah.Mode.TILE:
 			x, y = self.get_bottom_left()
-			write("\path[overlay, fill tile image=%s] (%smm, %smm) rectangle ++(%smm, %smm);\n"
-				% (path, x, y, self.format.width, self.format.height));
+			write("\\path[overlay, fill tile image=%s] (%smm, %smm) rectangle ++(%smm, %smm);\n"
+				% (inc_path, x, y, self.format.width, self.format.height));
 
 	def border_props(self, style):
 		if style.border_style == ptah.BorderStyle.NONE:
@@ -352,6 +367,7 @@ class Drawer(graph.Drawer):
 				(self.border_props(style), name, name))
 
 	def draw_image(self, path, box, style):
+		inc_path = self.make_path(path)
 		write = self.out.write
 		x, y = self.remap(box.centerx(), box.centery())
 		W, H = box.w, box.h
@@ -363,14 +379,14 @@ class Drawer(graph.Drawer):
 			write("\\node[%s%s,inner sep=0] at(%smm, %smm) (A) {" \
 				% (anchor, shadow, x + dx, y + dy))
 			write("\\includegraphics[width=%smm, height=%smm, keepaspectratio]{%s}"
-				% (box.w, box.h, path));
+				% (box.w, box.h, inc_path));
 			write("};\n")
 			self.draw_border_around("A", style)
 
 		elif style.mode == ptah.Mode.STRETCH:
 			write("\\node at(%smm, %smm) {" % (x, y))
 			write("\\resizebox{%smm}{%smm}{\\includegraphics{%s}}"
-				% (box.w, box.h, path));
+				% (box.w, box.h, inc_path));
 			write("};\n")
 			self.draw_border(x, y, W, H, style)
 
@@ -403,7 +419,7 @@ class Drawer(graph.Drawer):
 			write("\\node[%s] at(%smm, %smm) {"
 				% (anchor, x + dx, y + dy))
 			write("\\includegraphics[%s, keepaspectratio]{%s}"
-				% (param, path));
+				% (param, inc_path));
 			write("};\n")
 			write("\\end{scope}\n")
 			self.draw_border(x, y, W, H, style)
@@ -600,7 +616,7 @@ class DocDrawer(Drawer):
 		write("& Size & & Margins & & & \\\\")
 		write("\\hline\n")
 		write("Name & Width & Height & Top & Bottom & Left & Right \\\\")
-		write("\\hline\hline\n")
+		write("\\hline\\hline\n")
 		for fmt in ptah.format.FORMATS.values():
 			write("%s & %s & %s & %s & %s & %s & %s \\\\"
 				% (
@@ -651,8 +667,8 @@ class DocDrawer(Drawer):
 		write("\\section{Text format}\n")
 		write("Subset of \\href{https://www.markdownguide.org/}{MarkDown} format:\n")
 		write("\\begin{description}\n")
-		write("\\item[**text**, \_\_text\_\_] Bold.")
-		write("\\item[*text*, \_text\_] Italic.")
+		write(r"\\item[**text**, \_\_text\_\_] Bold.")
+		write(r"\\item[*text*, \_text\_] Italic.")
 		write("\\item[blank line] New paragraph.")
 		write("\\end{description}\n")
 		write("More to come.")
@@ -661,7 +677,7 @@ class DocDrawer(Drawer):
 		write("\\section{Fonts}\n")
 		for font in ptah.font.get_fonts():
 			if font.avail:
-				write(f"\paragraph{{{font.name}}}:~\n\n{{")
+				write(f"\\paragraph{{{font.name}}}:~\n\n{{")
 				font.use(self.out)
 				write("ABCDEFGHIJKLMNOPQRSTUVWXYZ\n\n")
 				write("abcdefghijklmnopqrstuvwxyz}\n\n")
