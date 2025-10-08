@@ -20,7 +20,8 @@
 
 from ptah.props import parse_union, parse_penum, parse_length, parse_float, \
 	parse_font, parse_color, parse_percent, \
-	Property, ColorProperty, ImageProperty, StringProperty
+	Property, ColorProperty, ImageProperty, StringProperty, \
+	enum_prop
 from ptah.graph import Mode, Align, BorderStyle, BorderWidth, Shadow, FontSize
 from ptah.util import enum_list
 
@@ -38,20 +39,11 @@ BACKGROUND_COLOR_PROP = ColorProperty(
 	"background-color", "Color for background.")
 BACKGROUND_IMAGE_PROP = ImageProperty(
 	"background-image", "background image")
-BACKGROUND_MODE_PROP = Property("background-mode",
-	"Background image mode.", parse_penum(Mode))
+BACKGROUND_MODE_PROP = enum_prop("background-mode", "Background image mode: %s.", Mode)
 
 # image properties
-MODE_PROP = Property(
-	"mode",
-	f"image mode, one of {enum_list(Mode)}.",
-	parse_penum(Mode),
-	default = Mode.FIT)
-ALIGN_PROP = Property(
-	"align",
-	f"image alignment, one of {enum_list(Align)}",
-	parse_penum(Align),
-	default = Align.CENTER)
+MODE_PROP = enum_prop("mode", "image mode, one of %s.", Mode, Mode.FIT)
+ALIGN_PROP = enum_prop("align", "image alignment, one of %s.", Align, Align.CENTER)
 IMAGE_PROP = ImageProperty("image", "image")
 SCALE_PROP = Property(
 	"scale",
@@ -68,35 +60,23 @@ VERTICAL_SHIFT_PROP = Property(
 	parse_length)
 
 # text properties
-TEXT_ALIGN_PROP = Property("text-align", f"Text alignment among {enum_list(Align)}.",
-	parse_penum(Align))
-TEXT_PROP = StringProperty("text", "Page text.")
-TEXT_COLOR_PROP = Property("text-color", f"Color fot the text.", parse_color)
-FONT_SIZE_PROP = Property("font-size", "font size.", parse_penum(FontSize))
+TEXT_ALIGN_PROP = enum_prop("text-align", "text alignment among %s.", Align)
+TEXT_PROP = StringProperty("text", "page text.")
+TEXT_COLOR_PROP = Property("text-color", "color fot the text.", parse_color)
+FONT_SIZE_PROP = enum_prop("font-size", "font size: %s.", FontSize, FontSize.MEDIUM)
 FONT_PROP = Property("font", "font name", parse_font)
 
 # border properties
-BORDER_STYLE = Property(
-	"border-style",
-	"Style for the border.",
-	parse_border_style,
-	default = BorderStyle.NONE
-)
+BORDER_STYLE = enum_prop("border-style", "style for the border: %s.", BorderStyle)
 BORDER_COLOR = Property(
 	"border-color",
 	"Color for border of an image.",
 	parse_color)
-BORDER_WIDTH = Property(
-	"border-width",
-	f"width of border lines: length or one of {enum_list(BorderWidth)}.",
-	parse_border_width)
+BORDER_WIDTH = enum_prop("border-width","width of border lines: length or one of %s.",
+	BorderWidth, BorderWidth.MEDIUM)
 
 # shadow properties
-SHADOW_STYLE = Property(
-	"shadow",
-	f"select the shadow type among {enum_list(Shadow)}.",
-	parse_shadow,
-	default = Shadow.NONE)
+SHADOW_STYLE = enum_prop("shadow", "select the shadow type among %s.", Shadow, Shadow.NONE)
 SHADOW_XOFFSET = Property(
 	"shadow-xoffset",
 	"shadow horizontal offset.",
@@ -114,7 +94,7 @@ SHADOW_COLOR = Property(
 	default = "#000000")
 SHADOW_OPACITY = Property(
 	"shadow-opacity",
-	"shadow opacity as percent value (100% opaque, 0% transparent).",
+	"shadow opacity as percent value (100\\% opaque, 0\\% transparent).",
 	parse_percent)
 
 

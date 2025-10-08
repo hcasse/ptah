@@ -67,7 +67,7 @@ def parse_styles(self, data, obj, mon):
 	for item in data:
 		setup_style(str(item), obj, mon)
 
-STYLES_PROP = Property("styles", "apply the named styles to the current object", parse_styles)
+STYLES_PROP = Property("styles", "apply the named styles to the current object (space separated)", parse_styles)
 
 
 class Frame(Map):

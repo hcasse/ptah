@@ -5,7 +5,7 @@ import os.path
 import ptah
 from ptah import format
 from ptah.graph import FontSize, Align, BorderStyle
-from ptah.album import Album, Image, Text, Page
+from ptah.album import Album, Image as aImage, Text, Page
 import ptah.font
 import ptah.format
 import ptah.props
@@ -473,6 +473,10 @@ class Drawer(graph.Drawer):
 		if package not in self.packages:
 			self.packages.append(package)
 
+	def use_tikz_package(self, package):
+		"""Add a TIKZ package."""
+		self.tikz_packages.add(package)
+
 	def draw_miniature_image(self, label, box):
 		x, y = self.remap(box.centerx(), box.centery())
 		write = self.out.write
@@ -564,6 +568,7 @@ class DocDrawer(Drawer):
 		for col in graph.HTML_COLORS.values():
 			self.declare_color(col)
 		self.use_package("listings")
+		self.use_tikz_package("positioning")
 		self.album.title = "Ptah Documentation"
 		self.album.author = "H. Cassé $<$hug.casse@gmail.com$>$"
 		self.album.date = "\\today"
@@ -632,17 +637,67 @@ class DocDrawer(Drawer):
 		write("\\section{Page types}\n")
 		for page in util.PAGE_MAP.values():
 			inst = page(self.mini)
-
-			# dump miniature
-			write("\\noindent\\begin{minipage}{.3\\textwidth}\n")
-			write("\\begin{tikzpicture}\n")
-			write("\\node[minimum width=%smm, minimum height=%smm, draw] {};\n"
-				% (MINIATURE_WIDTH, MINIATURE_HEIGHT))
+			write(f"""
+\\noindent\\begin{{minipage}}{{.3\\textwidth}}
+\\begin{{tikzpicture}}
+	\\node[minimum width={MINIATURE_WIDTH}mm, minimum height={MINIATURE_HEIGHT}mm, draw]
+		(page) {{}};
+	\\node[below=0mm of page] {{{page.NAME}}} ;
+""")
 			page.gen_miniature(self.mini_drawer)
-			write("\\end{tikzpicture}\n")
-			write("\\end{minipage}\n")
+			write("""
+\\end{tikzpicture}
+\\end{minipage}""")
+		write("\n\n")
+
+		write(r"""
+\noindent
+Single image or text properties $prop$ are just named as is: \texttt{prop: value}. \\
+Multiple image or text properties $prop$ have to be followed by their number: \texttt{prop\#i: value}. \\
+Named $name$ text or image properties $prop$ can be prefixed with dot: \texttt{name.prop: value}.
+
+Example:
+\begin{lstlisting}
+  pages:
+
+    - name: single property
+      type: center
+      image: single.jpg
+
+    - name: several images
+      type: trio
+      image#0: 0.jpg
+      image#1: 1.jpg
+      image#2: 2.jpg
+
+    - name: title
+      title.text: the title
+\end{lstlisting}
+""")
+
+		# generate page properties
+		write("\\section{Page Properties}\n")
+		write("\\begin{description}\n")
+		for prop in Page.PROPS:
+			write(f"\\item[{prop.id}:] {prop.get_description()}\n")
+		write("\\end{description}\n")
+
+		# generate image properties
+		write("\\section{Image Properties}\n")
+		write("\\begin{description}\n")
+		for prop in aImage.PROPS:
+			write(f"\\item[{prop.id}:] {prop.get_description()}\n")
+		write("\\end{description}\n")
+
+		# generate text properties
+		write("\\section{Text Properties}\n")
+		write("\\begin{description}\n")
+		for prop in Text.PROPS:
+			write(f"\\item[{prop.id}:] {prop.get_description()}\n")
+		write("\\end{description}\n")
 
 			# dump properties
+		if False:
 			write("\\begin{minipage}{.6\\textwidth}\n")
 			write("\\paragraph{Type:} %s\n" % page.NAME)
 			write("\\begin{description}\n")
@@ -667,8 +722,8 @@ class DocDrawer(Drawer):
 		write("\\section{Text format}\n")
 		write("Subset of \\href{https://www.markdownguide.org/}{MarkDown} format:\n")
 		write("\\begin{description}\n")
-		write(r"\\item[**text**, \_\_text\_\_] Bold.")
-		write(r"\\item[*text*, \_text\_] Italic.")
+		write(r"\item[**text**, \_\_text\_\_] Bold.")
+		write(r"\item[*text*, \_text\_] Italic.")
 		write("\\item[blank line] New paragraph.")
 		write("\\end{description}\n")
 		write("More to come.")
@@ -705,3 +760,4 @@ def gen_doc():
 	ptah.font.check()
 	drawer = DocDrawer()
 	drawer.gen()
+	print("Result in ptah.pdf")

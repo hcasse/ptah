@@ -102,7 +102,7 @@ def parse_float(self, val, obj, mon):
 		raise CheckError(f"value {self.id} of {obj.get_location()} should be a floatting-pointer number")
 
 
-LENGTH_RE = re.compile("([+-]?[0-9\.]?)([a-zA-Z]+)")
+LENGTH_RE = re.compile(r"([+-]?[0-9\.]?)([a-zA-Z]+)")
 
 LENGTH_UNITS = {
 	"mm": 1,
@@ -131,6 +131,16 @@ def parse_penum(cls):
 		except KeyError:
 			raise CheckError(f"{val} in {obj.name} must be one of {', '.join([normalize(x.name) for x in cls])}")
 	return convert
+
+def help_penum(msg, cls, default=None):
+	"""Generate message for enumerated property of type cls. msg must contain %s
+	that will be replaced by the list of enumerated values."""
+	def make(val):
+		text = f"\\texttt{{{normalize(val.name).lower()}}}"
+		if val == default:
+			text = f"[{text}]"
+		return text
+	return msg % (', '.join([make(x) for x in cls]))
 
 def parse_color(self, col, obj, mon):
 	if isinstance(col, str):
@@ -228,6 +238,10 @@ def LengthProperty(id, desc, mode = 0):
 	return Property(id, desc, parse_length, mode)
 def BoolProperty(id, desc, mode = 0):
 	return Property(id, desc, parse_bool, mode)
+def enum_prop(id, desc, cls, default=None):
+	if default is None:
+		default = list(cls)[0]
+	return Property(id, help_penum(desc, cls, default), parse_penum(cls), default=default)
 
 
 class Map:
