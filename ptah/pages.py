@@ -17,8 +17,8 @@ class Orientation(Enum):
 	HORIZONTAL = 1
 
 
-ORIENTATION_PROP = props.Property(
-	"orientation", "orientation", props.parse_penum(Orientation))
+ORIENTATION_PROP = props.enum_prop(
+	"orientation", "select orientation: %s.", Orientation)
 MINIATURE_BACK = "yellow!50!white"
 
 
@@ -30,7 +30,7 @@ def add(props, prop):
 class CenterPage(Page):
 
 	NAME = "center"
-	INSIDE_PROP = props.BoolProperty("inside", "insert text inside image.")
+	INSIDE_PROP = props.bool_prop("inside", "insert text inside image.")
 	PROPS = Page.PROPS + Text.PROPS + Image.PROPS + [INSIDE_PROP]
 	MAP = props.make(PROPS)
 

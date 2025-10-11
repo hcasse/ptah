@@ -2,20 +2,19 @@
 
 import os
 import os.path
+import subprocess
+import sys
+
 import ptah
 from ptah import format
 from ptah.graph import FontSize, Align, BorderStyle
-from ptah.album import Album, Image as aImage, Text, Page
+from ptah.album import Album, Image, Text, Page
 import ptah.font
 import ptah.format
 import ptah.props
-from ptah import util
-import subprocess
-import sys
-from ptah import graph
+from ptah import graph, util
 import ptah.text
-from ptah import util
-from PIL import Image
+import PIL
 
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
@@ -243,7 +242,7 @@ class Drawer(graph.Drawer):
 		write("}\n")
 
 	def get_size(self, path):
-		i = Image.open(path)
+		i = PIL.Image.open(path)
 		return i.size
 
 	def get_page_center(self):
@@ -634,9 +633,12 @@ class DocDrawer(Drawer):
 		write("Size in mm.\n")
 
 		# generate pages
+		all_props = Image.PROPS + Text.PROPS + Page.PROPS
 		write("\\section{Page types}\n")
 		for page in util.PAGE_MAP.values():
 			inst = page(self.mini)
+
+			# generate miniature
 			write(f"""
 \\noindent\\begin{{minipage}}{{.3\\textwidth}}
 \\begin{{tikzpicture}}
@@ -648,6 +650,18 @@ class DocDrawer(Drawer):
 			write("""
 \\end{tikzpicture}
 \\end{minipage}""")
+
+			# generate properties
+			props = [ prop for prop in page.PROPS if prop not in all_props ]
+			write("\\begin{minipage}[t]{.65\\textwidth}")
+			if props:
+				write("Additional properties:\n")
+				write("\\begin{description}\n")
+				for prop in props:
+					write(f"\\item[{prop.id}:] {prop.get_description()}\n")
+				write("\\end{description}\n")
+			write("\\end{minipage}\n\n")
+
 		write("\n\n")
 
 		write(r"""
@@ -685,7 +699,7 @@ Example:
 		# generate image properties
 		write("\\section{Image Properties}\n")
 		write("\\begin{description}\n")
-		for prop in aImage.PROPS:
+		for prop in Image.PROPS:
 			write(f"\\item[{prop.id}:] {prop.get_description()}\n")
 		write("\\end{description}\n")
 

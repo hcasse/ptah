@@ -238,6 +238,12 @@ def LengthProperty(id, desc, mode = 0):
 	return Property(id, desc, parse_length, mode)
 def BoolProperty(id, desc, mode = 0):
 	return Property(id, desc, parse_bool, mode)
+
+
+# New property builder
+def bool_prop(id, desc):
+	return Property(id, desc + " (true or false).", parse_bool)
+
 def enum_prop(id, desc, cls, default=None):
 	if default is None:
 		default = list(cls)[0]
