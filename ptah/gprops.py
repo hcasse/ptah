@@ -72,7 +72,7 @@ BORDER_COLOR = Property(
 	"border-color",
 	"Color for border of an image.",
 	parse_color)
-BORDER_WIDTH = enum_prop("border-width","width of border lines: length or one of %s.",
+BORDER_WIDTH = enum_prop("border-width", "width of border lines: length or one of %s.",
 	BorderWidth, BorderWidth.MEDIUM)
 
 # shadow properties

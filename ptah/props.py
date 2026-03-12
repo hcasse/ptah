@@ -70,6 +70,9 @@ class Property:
 		self.implies = implies
 		self.default = default
 
+	def __repr__(self):
+		return self.id
+
 	def parse(self, val, obj, mon):
 		"""Parse the given text and return the corresponding text.
 		Display an error or raises CheckError if the text is not valid."""
@@ -361,6 +364,13 @@ class Container(Map):
 		Map.__init__(self, parent)
 		self.parent = parent
 		self.content = []
+
+	def dump(self):
+		for i, item in enumerate(self.content):
+			item.dump(i)
+		for id, prop in self.props.items():
+			if prop:
+				print(f"- {id}: {prop}")
 
 	def get_content(self):
 		return self.content

@@ -51,7 +51,12 @@ class Format:
 
 	def body_height(self):
 		return self.height - self.top_margin - self.bottom_margin
-	
+
+	def __repr__(self):
+		return f"{self.name}: {self.width}x{self.height} [{self.top_margin}, " \
+			+ f"{self.bottom_margin}, {self.oddside_margin}, {self.evenside_margin}, " \
+			+ f"{self.column_sep}]"
+
 
 A4 = Format("A4", 210, 297,
 	top_margin = 19, bottom_margin = 36.7,

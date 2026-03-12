@@ -7,14 +7,14 @@ import sys
 
 import ptah
 from ptah import format
-from ptah.graph import FontSize, Align, BorderStyle
+from ptah.graph import FontSize, Align, BorderStyle, GenError
 from ptah.album import Album, Image, Text, Page
 import ptah.font
 import ptah.format
 import ptah.props
 from ptah import graph, util
 import ptah.text
-import PIL
+import PIL.Image
 
 MINIATURE_WIDTH = 30
 MINIATURE_HEIGHT = 40
@@ -113,26 +113,45 @@ class Drawer(graph.Drawer):
 
 	# Drawer functions
 	def gen(self):
+		"""Generate the album.
+		Raises graph.GenError if there is an error."""
 		self.gen_latex()
 		self.gen_pdf()
 
 	def gen_pdf(self):
 		dir = self.album.get_base()
+
+		# move to parent directory
 		if dir != "":
 			cwd = os.path.abspath(os.getcwd())
 			os.chdir(dir)
+
+		# run pdflatex
+		base_path = os.path.basename(self.out_path)
 		rc = subprocess.run(
-			"pdflatex %s" % os.path.basename(self.out_path),
+			"pdflatex %s" % base_path,
 			shell=True,
 			stdin = subprocess.DEVNULL,
 			stdout = sys.stdout if util.DEBUG else subprocess.DEVNULL,
 			stderr = sys.stderr if util.DEBUG else subprocess.DEVNULL)
+		if rc.returncode:
+			raise graph.GenError(f"generation error: {rc.returncode}")
 		if False:	#rc.returncode == 0:
 			rc = subprocess.run(
 				"pdflatex %s" % os.path.basename(self.out_path),
 				shell=True,
 				stdout = subprocess.DEVNULL,
 				stderr = subprocess.DEVNULL)
+
+		# cleanup
+		root = os.path.splitext(base_path)[0]
+		for ext in [".aux", ".log", ".out", ".tex", ".toc"]:
+			try:
+				os.remove(root + ext)
+			except (FileNotFoundError, OSError):
+				pass
+
+		# back to the original directory
 		if dir != "":
 			os.chdir(cwd)
 

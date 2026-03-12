@@ -25,6 +25,7 @@ import subprocess
 import sys
 import yaml
 
+from ptah import graph
 from ptah import io
 from ptah import format
 from ptah import util
@@ -73,7 +74,9 @@ def main(mon = io.DEF):
 	parser.add_argument("--doc", action="store_true",
 		help="Generate the documentation.")
 	parser.add_argument("--debug", action="store_true",
-		help="Generate the documentation.")
+		help="Perform debug display.")
+	parser.add_argument("--debug-album", action="store_true",
+		help="Display the album for debugging.")
 	parser.add_argument("--version", action="store_true",
 		help="Display the version.")
 
@@ -101,10 +104,16 @@ def main(mon = io.DEF):
 			try:
 				album = Album(path)
 				album.read(mon)
-				latex.Drawer(album).gen()
+				if args.debug_album:
+					album.dump()
+				else:
+					latex.Drawer(album).gen()
 			except util.CheckError as e:
 				mon.print_error(str(e))
-
+				exit(1)
+			except graph.GenError as e:
+				mon.print_error(str(e))
+				exit(2)
 
 if __name__ == "__main__":
 	main()

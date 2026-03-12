@@ -203,6 +203,23 @@ class PageStyle:
 		self.background_image = None
 		self.background_mode = Mode.FIT
 
+	def dump(self):
+		print(f"- background color: {self.background_color}")
+		if self.background_image:
+			print(f"- background image: {self.background_image}")
+		if self.background_mode:
+			print(f"- mode: {self.background_mode}")
+
+
+class GenError(Exception):
+	"""Called when there is a generation error."""
+
+	def __init__(self, msg):
+		self.msg = msg
+
+	def __repr__(self):
+		return self.msg
+
 
 class Drawer:
 	"""Handler for drawing content of a page. Position and sizes are

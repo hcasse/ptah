@@ -87,6 +87,11 @@ class Frame(Map):
 		else:
 			self.name = name
 
+	def dump(self, num):
+		for id, prop in self.props.items():
+			if prop:
+				print(f"- {id}#{num}: {prop}")
+
 	def get_location(self):
 		return f"{self.name} in {self.get_parent().get_location()}"
 
@@ -225,6 +230,11 @@ class Page(Container, graph.PageStyle):
 		graph.PageStyle.__init__(self)
 		self.name = "<no name>"
 		self.number = None
+
+	def dump(self):
+		print(f"PAGE {self.name}")
+		print(f"- number: {self.number}")
+		Container.dump(self)
 
 	def get_location(self):
 		return f"{self.name}:{self.number + 1}"
@@ -393,6 +403,8 @@ class Album(Container):
 		self.path = path
 		self.pages = None
 		self.base = os.path.dirname(path)
+		if not self.base:
+			self.base = "."
 		self.name = os.path.basename(path)
 		self.format = format.A4
 		self.title = None
@@ -404,6 +416,24 @@ class Album(Container):
 		self.default = default
 		self.styles = {}
 		self.colors = {}
+
+	def dump(self):
+		"""Dump ,the album for debugging purpose."""
+		print(f"path: {self.path}")
+		print(f"base: {self.base}")
+		print(f"name: {self.name}")
+		print(f"format: {self.format}")
+		print(f"title: {self.title}")
+		print(f"author: {self.author}")
+		print(f"date: {self.date}")
+		print(f"background color: {self.background_color}")
+		print(f"background image: {self.background_image}")
+		print(f"paths: {self.paths}")
+		print(f"styles: {self.styles}")
+		print(f"colors: {self.colors}")
+		for page in self.pages:
+			page.dump()
+
 
 	def get_album(self):
 		return self
