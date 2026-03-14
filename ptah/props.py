@@ -295,7 +295,6 @@ class Map:
 			if val is not None:
 				return val
 			elif required:
-				#traceback.print_stack(file=sys.stdout)
 				raise CheckError(f"{prop.id} has to be defined in {self.get_location()}")
 			else:
 				return default
@@ -309,7 +308,7 @@ class Map:
 		except KeyError:
 			mon.print_warning(f"no property {key} in {self.get_location()}. Ignoring it.")
 		except CheckError as e:
-			mon.print_error(f"bad value {val} for {key} in {self.get_location()}: {e}. Value must be {prop.desc}.")
+			mon.print_warning(f"bad value {val} for {key} in page {self.get_location()}. Value must be {prop.desc}.")
 
 	def parse(self, data, mon):
 		"""Parse the given data, a dictionary of (key, value) and built
