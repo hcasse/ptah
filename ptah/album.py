@@ -156,7 +156,7 @@ class Image(Frame, graph.Style):
 		if self.image is None:
 			self.image = self.get_parent().get_prop(IMAGE_PROP, direct=True)
 		if self.image is None:
-			mon.print_error(f"image in {self.get_location()} is required!")
+			mon.print_warning(f"image in {self.get_location()} is required!")
 
 	def gen(self, drawer):
 		if self.image is not None:
@@ -350,7 +350,7 @@ def parse_declare_styles(self, content, album, mon):
 		except KeyError:
 			mon.print_error("a style must have a name!")
 			continue
-		style = Style(name)
+		style = Style(name, album)
 		style.parse(item, io.DEF)
 		album.add_style(style)
 
@@ -398,7 +398,7 @@ class Album(Container):
 	MAP = make(PROPS)
 
 	def __init__(self, path):
-		default = Default()
+		default = Default(self)
 		Container.__init__(self, default)
 		self.path = path
 		self.pages = None
@@ -532,14 +532,19 @@ class Default(Container):
 	PROPS = Page.STYLE_PROPS + Image.STYLE_PROPS + Text.STYLE_PROPS
 	MAP = make(PROPS)
 
-	def __init__(self):
+	def __init__(self, album):
 		Container.__init__(self)
+		self.album = album
 
 	def get_props_map(self):
 		return self.MAP
 
 	def get_location(self):
 		return "default"
+
+	def get_album(self):
+		"""Get the current album."""
+		return self.album
 
 
 class Style(Map):
@@ -549,9 +554,10 @@ class Style(Map):
 	PROPS = Page.STYLE_PROPS + Image.STYLE_PROPS + Text.STYLE_PROPS
 	MAP = make(PROPS, NAME_PROP)
 
-	def __init__(self, name):
+	def __init__(self, name, album):
 		Map.__init__(self)
 		self.name = name
+		self.album = album
 
 	def get_location(self):
 		return f"style {self.name}"
@@ -559,3 +565,6 @@ class Style(Map):
 	def get_props_map(self):
 		return self.MAP
 
+	def get_album(self):
+		"""Get the owner album."""
+		return self.album

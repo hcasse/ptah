@@ -344,7 +344,6 @@ class Drawer(graph.Drawer):
 
 	def shadow_props(self, style):
 		if style.shadow == ptah.Shadow.SIMPLE:
-			print("simple")
 			opacity = style.shadow_opacity
 			if opacity == None:
 				opacity = .25
@@ -355,7 +354,6 @@ class Drawer(graph.Drawer):
 				",shadow yshift=%smm" % (-style.shadow_yoffset) + \
 				"}"
 		elif style.shadow == ptah.Shadow.FUZZY:
-			print("fuzzy")
 			opacity = style.shadow_opacity
 			if opacity == None:
 				opacity = 1.
@@ -470,7 +468,6 @@ class Drawer(graph.Drawer):
 		if style.text_color is not None:
 			write(f"\\color{{{self.get_color(style.text_color)}}} ")
 		parsed_text = self.text_syntax.parse(text)
-		print(f"DEBUG: {parsed_text}")
 		if self.text_gen is None:
 			self.text_gen = ptah.text.Output(self.out)
 		self.text_gen.output(parsed_text)
